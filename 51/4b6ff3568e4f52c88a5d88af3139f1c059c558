@@ -1,0 +1,20 @@
+README.md
+  s_bbb0ff186a9ae0::t_68e9199bf904b0 7-18
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "514b6ff3568e4f52c88a5d88af3139f1c059c558",
+  "prompts": {},
+  "logical_commit_id": "514b6ff3568e4f52c88a5d88af3139f1c059c558",
+  "sessions": {
+    "s_bbb0ff186a9ae0": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fffe5-4a9f-7f41-84af-9d16d618d300",
+        "model": "unknown"
+      },
+      "human_author": "masongzhi <masongzhi@bigo.sg>"
+    }
+  }
+}
