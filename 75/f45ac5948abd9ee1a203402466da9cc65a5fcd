@@ -1,0 +1,28 @@
+CHANGELOG.md
+  s_c032f0b60949dd::t_b492570327201d 3-6
+package-lock.json
+  s_c032f0b60949dd::t_c074bc044d4537 3,9
+package.json
+  s_c032f0b60949dd::t_1b70f0e5e45eec 3
+skills/prepare-upstream-pr/SKILL.md
+  s_c032f0b60949dd::t_d07afcc1b58d78 3,6,8,10-15,25-26,29-31,52,54,57,59,63-65,80,83,86,93,95
+skills/prepare-upstream-pr/agents/openai.yaml
+  s_c032f0b60949dd::t_f3544505e85175 3-4
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "75f45ac5948abd9ee1a203402466da9cc65a5fcd",
+  "prompts": {},
+  "logical_commit_id": "75f45ac5948abd9ee1a203402466da9cc65a5fcd",
+  "sessions": {
+    "s_c032f0b60949dd": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fff73-c8d2-7a63-a445-0739d3818391",
+        "model": "unknown"
+      },
+      "human_author": "masongzhi <masongzhi@bigo.sg>"
+    }
+  }
+}
