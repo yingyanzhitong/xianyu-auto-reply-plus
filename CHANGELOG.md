@@ -1,5 +1,9 @@
 # 更新日志
 
+## 0.3.48 - 2026-08-14
+
+- 调整 `prepare-upstream-pr`：上游 PR 分支必须先从 `base/main` 创建并推送到 `fork`（`yingyanzhitong/xianyu-auto-reply`）；独立开发仓库 `origin`（`yingyanzhitong/xianyu-auto-reply-plus`）仅作为功能来源，不再承载上游 PR 分支。
+
 ## 0.3.12 - 2026-08-04
 
 - 新增 `prepare-upstream-pr` 项目技能：可从指定功能点或提交提炼最小补丁，基于 `base/main` 创建分支并发起、核验正式上游 PR。

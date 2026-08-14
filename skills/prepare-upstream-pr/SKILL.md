@@ -1,11 +1,17 @@
 ---
 name: prepare-upstream-pr
-description: 从指定功能点、文件或提交中提炼最小改动，基于 base/main 新建分支并发起正式上游 PR。用于用户要求将某个功能或 commit 贡献到上游、避免混入 fork 改动，或需要将草稿 PR 转为正式 PR 的场景。
+description: 从指定功能点、文件或提交中提炼最小改动，基于 base/main 在 fork 创建主题分支并发起正式上游 PR。用于用户要求将某个功能或 commit 贡献到上游、避免混入开发仓库改动，或需要将草稿 PR 转为正式 PR 的场景。
 ---
 
-# 基于 base/main 发正式上游 PR
+# 基于 base/main 在 fork 发正式上游 PR
 
-将一个明确功能点或提交中的最小必要改动贡献到上游。默认约定：`base` 是上游远程仓库，`origin` 是可推送的 fork；PR 的目标为 `base/main`。
+将一个明确功能点或提交中的最小必要改动贡献到上游。默认远程约定如下：
+
+- `origin`：独立开发仓库 `yingyanzhitong/xianyu-auto-reply-plus`，仅作为功能、提交或文件的来源。
+- `fork`：专用 PR fork `yingyanzhitong/xianyu-auto-reply`，所有上游 PR 分支必须在此创建并推送。
+- `base`：上游仓库 `zhinianboke/xianyu-auto-reply`，PR 的目标为 `base/main`。
+
+在本流程中，禁止向 `origin` 或 `base` 推送 PR 分支。
 
 ## 先确定范围
 
@@ -16,9 +22,13 @@ description: 从指定功能点、文件或提交中提炼最小改动，基于 
 ```bash
 git remote -v
 git fetch base main
-git fetch origin main
+git fetch fork main
+git fetch origin --prune
 git log -1 --oneline base/main
 ```
+
+- 确认 `fork` 和 `base` 的地址分别为 `yingyanzhitong/xianyu-auto-reply` 与 `zhinianboke/xianyu-auto-reply`。远程名称或地址不符合约定时，先停止并说明问题。
+- 候选功能可以来自 `origin` 的分支、提交或当前工作区，但 `origin` 只提供来源，不承载上游 PR 分支。
 
 - 查询同类开放 PR，避免重复提交：
 
@@ -39,16 +49,20 @@ git diff <commit>^ <commit> -- <候选路径>
 - 提交混有订单、页面、发布、配置或其他功能时，只手工补入目标代码和相应测试；不要整体 cherry-pick。
 - 每一处变更都必须能追溯到用户选定的功能点。保留上游已有代码风格和行为。
 
-## 从上游基线创建分支
+## 先在 fork 创建 PR 分支
 
-从 `base/main` 创建新的主题分支，不得从 `origin/main`、发布分支或既有 PR 分支切出：
+先以 `base/main` 为起点在 `fork` 创建远程主题分支，再创建同名本地分支。不得从 `origin/main`、发布分支或既有 PR 分支切出：
 
 ```bash
+git push fork base/main:refs/heads/agent/<short-feature-name>
 git switch -c agent/<short-feature-name> base/main
+git branch --set-upstream-to=fork/agent/<short-feature-name> agent/<short-feature-name>
 git merge-base --is-ancestor base/main HEAD
 ```
 
-若当前工作区不能安全切换，使用独立 worktree；不要清理、还原或暂存用户的无关改动。
+- 创建前检查 `fork` 中不存在同名分支；若已存在，改用新的分支名或先与用户确认，绝不覆盖已有分支。
+- 上述首次 `git push` 的目的仅是从上游基线在 `yingyanzhitong/xianyu-auto-reply` 切出分支；之后所有分支更新同样只推送到 `fork`。
+- 若当前工作区不能安全切换，使用独立 worktree；不要清理、还原或暂存用户的无关改动。
 
 ## 实现与验证
 
@@ -63,22 +77,22 @@ git diff --check base/main...HEAD
 
 - 遵从项目提交规则：如要求版本和中文 `CHANGELOG.md`，只递增所属组件版本；如要求标签，确认标签未占用后推送到 fork。不要因为创建上游 PR 擅自部署生产环境。
 
-## 提交、推送与正式 PR
+## 提交、推送到 fork 与正式 PR
 
 - 仅暂存已核对的路径，使用简短且准确的提交信息。
-- 将新分支推送到 `origin`，不要推送到 `base`：
+- 将新分支更新推送到 `fork`，不得推送到 `origin` 或 `base`：
 
 ```bash
-git push -u origin agent/<short-feature-name>
+git push fork HEAD:refs/heads/agent/<short-feature-name>
 ```
 
 - 创建跨 fork PR 时，明确指定上游仓库、目标分支与 fork 头分支。创建正式 PR，**不得添加 `--draft`**：
 
 ```bash
 gh pr create \
-  --repo <upstream-owner>/<repo> \
+  --repo zhinianboke/xianyu-auto-reply \
   --base main \
-  --head <fork-owner>:agent/<short-feature-name> \
+  --head yingyanzhitong:agent/<short-feature-name> \
   --title '<类型>: <简短说明>' \
   --body-file <pr-body.md>
 ```

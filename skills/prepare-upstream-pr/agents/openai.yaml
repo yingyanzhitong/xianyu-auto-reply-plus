@@ -1,4 +1,4 @@
 interface:
   display_name: "上游正式 PR"
-  short_description: "从 base/main 创建最小改动并提交正式上游 PR"
-  default_prompt: "使用 $prepare-upstream-pr 从一个功能点或提交创建指向 base/main 的正式 PR。"
+  short_description: "从 base/main 在 fork 创建分支并提交正式上游 PR"
+  default_prompt: "使用 $prepare-upstream-pr 从一个功能点或提交，在 fork 创建分支并向 base/main 提交正式 PR。"
