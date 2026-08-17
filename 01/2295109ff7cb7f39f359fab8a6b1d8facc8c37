@@ -1,0 +1,61 @@
+frontend/src/pages/notifications/NotificationChannels.tsx
+  s_9c734ee5ed9168::t_41d30efa3b85b1 125-127,164-165,169-171
+common/tests/test_notification_template.py
+  s_9c734ee5ed9168::t_4839f96e1e00ac 70-85
+websocket/app/services/xianyu/auto_reply_service.py
+  s_9c734ee5ed9168::t_fd110c7eff831f 583-596,737,902-904,1039-1041,1052-1054,1078-1079,1081,1083-1087,1096-1098,1946-1953
+frontend/package.json
+  s_9c734ee5ed9168::t_1cbcbe253bc89c 4
+package-lock.json
+  s_9c734ee5ed9168::t_17a09270285ad2 3,9
+package.json
+  s_9c734ee5ed9168::t_6e56d502ffa9fa 3
+frontend/package-lock.json
+  s_9c734ee5ed9168::t_5ac4dc125d1ed5 3,9
+common/utils/notification_template.py
+  s_9c734ee5ed9168::t_bc7ca44f11c3ff 25-27
+common/tests/test_notification_dispatch.py
+  s_9c734ee5ed9168::t_07cb4cfa65f899 91,101-111,113-132
+  s_ba72aabed0be2b::t_4088b0f112c44e 112
+CHANGELOG.md
+  s_9c734ee5ed9168::t_0f89bdb0563f30 3-9
+websocket/app/services/xianyu/notification_manager.py
+  s_9c734ee5ed9168::t_78a29d3e34c4cf 62-64,130-131,133,137-139,154-156
+backend-web/app/api/routes/cookies.py
+  s_9c734ee5ed9168::t_69f4690d507106 18-19,21,52,109-226,457-458,498
+backend-web/tests/test_account_health.py
+  s_9c734ee5ed9168::t_553bac9935561f 1-49
+frontend/src/api/accounts.ts
+  s_9c734ee5ed9168::t_fe0a7a34e5907e 2,66,145
+frontend/src/pages/accounts/AccountHealthPopover.tsx
+  s_9c734ee5ed9168::t_e4be48ebbfdf6e 1-81
+frontend/src/pages/accounts/Accounts.tsx
+  s_9c734ee5ed9168::t_0a9a9922eae269 2,17,27-32,60-87,151-152,300-306,308-339,367,2454-2456,2512-2520,2522,2730-2731,4781-4791
+frontend/src/types/index.ts
+  s_9c734ee5ed9168::t_ab5a40b86ece6d 54,82-96
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "012295109ff7cb7f39f359fab8a6b1d8facc8c37",
+  "prompts": {},
+  "logical_commit_id": "2f07273303969fb5e333ab597b402ccf1bdcda39",
+  "sessions": {
+    "s_9c734ee5ed9168": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00e85-7f86-7f81-9893-f9d461f7eb40",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "masongzhi <masongzhi@bigo.sg>"
+    },
+    "s_ba72aabed0be2b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fee98-c7c0-7d23-bfaf-8e8f4d4c284d",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "masongzhi <masongzhi@bigo.sg>"
+    }
+  }
+}
