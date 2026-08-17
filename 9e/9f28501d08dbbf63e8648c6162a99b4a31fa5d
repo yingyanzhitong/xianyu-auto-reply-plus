@@ -1,0 +1,34 @@
+CHANGELOG.md
+  s_e75ea2666064c5::t_5600833ae78ce2 3-7
+backend-web/app/api/routes/cookies.py
+  s_e75ea2666064c5::t_39bfed802fdeac 18-19,21,52,109-226,457-458,498
+backend-web/tests/test_account_health.py
+  s_e75ea2666064c5::t_6982db0879546f 1-49
+frontend/src/api/accounts.ts
+  s_e75ea2666064c5::t_552e025810e552 2,66,145
+frontend/src/pages/accounts/AccountHealthPopover.tsx
+  s_e75ea2666064c5::t_d8a454553c4123 1-81
+frontend/src/pages/accounts/Accounts.tsx
+  s_e75ea2666064c5::t_7424d2121d5453 2,17,27-32,60-87,151-152,300-306,308-339,367,2454-2456,2512-2520,2522,2730-2731,4781-4791
+frontend/src/types/index.ts
+  s_e75ea2666064c5::t_077743eaf16124 54,82-96
+package.json
+  s_e75ea2666064c5::t_871cb76d1163c2 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "9e9f28501d08dbbf63e8648c6162a99b4a31fa5d",
+  "prompts": {},
+  "logical_commit_id": "9e9f28501d08dbbf63e8648c6162a99b4a31fa5d",
+  "sessions": {
+    "s_e75ea2666064c5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00d81-05aa-7683-861c-e92baf079c42",
+        "model": "unknown"
+      },
+      "human_author": "masongzhi <masongzhi@bigo.sg>"
+    }
+  }
+}
