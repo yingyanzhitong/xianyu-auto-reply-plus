@@ -1,0 +1,40 @@
+common/tests/test_notification_dispatch.py
+  s_9c734ee5ed9168::t_07cb4cfa65f899 91,101-106,108-132
+common/tests/test_notification_template.py
+  s_9c734ee5ed9168::t_4839f96e1e00ac 70-85
+common/utils/notification_template.py
+  s_9c734ee5ed9168::t_bc7ca44f11c3ff 25-27
+websocket/app/services/xianyu/auto_reply_service.py
+  s_9c734ee5ed9168::t_fd110c7eff831f 583-596,737,902-904,1039-1041,1052-1054,1078-1079,1081,1083-1087,1096-1098,1946-1953
+websocket/app/services/xianyu/notification_manager.py
+  s_9c734ee5ed9168::t_78a29d3e34c4cf 62-64,130-131,133,137-139,154-156
+CHANGELOG.md
+  s_9c734ee5ed9168::t_0f89bdb0563f30 3-7
+frontend/package-lock.json
+  s_9c734ee5ed9168::t_5ac4dc125d1ed5 3,9
+frontend/package.json
+  s_9c734ee5ed9168::t_1cbcbe253bc89c 4
+frontend/src/pages/notifications/NotificationChannels.tsx
+  s_9c734ee5ed9168::t_41d30efa3b85b1 125-127,164-165,169-171
+package-lock.json
+  s_9c734ee5ed9168::t_17a09270285ad2 3,9
+package.json
+  s_9c734ee5ed9168::t_6e56d502ffa9fa 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "2f07273303969fb5e333ab597b402ccf1bdcda39",
+  "prompts": {},
+  "logical_commit_id": "2f07273303969fb5e333ab597b402ccf1bdcda39",
+  "sessions": {
+    "s_9c734ee5ed9168": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00e85-7f86-7f81-9893-f9d461f7eb40",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "masongzhi <masongzhi@bigo.sg>"
+    }
+  }
+}
