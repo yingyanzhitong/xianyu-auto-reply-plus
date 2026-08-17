@@ -1,0 +1,166 @@
+README.md
+  s_ac82bf6519da46::t_acb6aca0e6a34b 222
+backend-web/_bootstrap.py
+  s_ac82bf6519da46::t_3fa893e14bb3f6 29,304-306,313
+backend-web/app/api/routes/_exports.py
+  s_ac82bf6519da46::t_5836ff81b44309 54,62-64,110,118-120
+backend-web/app/api/routes/chat_customer_order.py
+  s_ac82bf6519da46::t_ea6d1d2a6d7691 70
+backend-web/app/api/routes/cookies.py
+  s_ac82bf6519da46::t_eb63c67e7dcc3c 45,328,477,959-971
+backend-web/app/api/routes/distribution.py
+  s_ac82bf6519da46::t_7d5f08e00ed161 468,472-473,477-478
+backend-web/app/api/routes/external_accounts.py
+  s_ac82bf6519da46::t_8ed2e0f73b74f8 1-76
+backend-web/app/api/routes/external_api_route.py
+  s_ac82bf6519da46::t_de51ac6e30ed6d 1-52
+backend-web/app/api/routes/external_category.py
+  s_ac82bf6519da46::t_435f734579f0e6 1-248
+backend-web/app/api/routes/external_publish.py
+  s_ac82bf6519da46::t_cd3e47a9d1a249 1-406
+backend-web/app/api/routes/orders.py
+  s_ac82bf6519da46::t_2332fa1336f9e1 156,327,469-476,597-645
+backend-web/app/api/routes/product_publish_capability.py
+  s_ac82bf6519da46::t_36e4e35258b199 1-76
+backend-web/app/api/routes/publish_addresses.py
+  s_ac82bf6519da46::t_31f5f5eb8953fb 18-19,85-99
+backend-web/app/core/config.py
+  s_ac82bf6519da46::t_9f1739f0585f2d 71
+backend-web/app/services/account_import_service.py
+  s_ac82bf6519da46::t_2c8b9f79f035a9 286-295
+backend-web/app/services/account_service.py
+  s_ac82bf6519da46::t_7462e2f39d6b22 446-450,452-454,672-677,681,685-690,694-706,708-712
+backend-web/app/services/amap_inputtips_service.py
+  s_ac82bf6519da46::t_1bf4d9e89a4058 1-143
+backend-web/app/services/compass/goofish_compass.py
+  s_ac82bf6519da46::t_a274615b900371 15,130
+backend-web/app/services/external_account_service.py
+  s_ac82bf6519da46::t_523d564c1f5c78 1-126
+backend-web/app/services/external_publish_media_service.py
+  s_ac82bf6519da46::t_7d969877642c0f 1-191
+backend-web/app/services/fund_flow_service.py
+  s_ac82bf6519da46::t_bc66d2d8b3c82b 10,14-15,29,33-37,40-41,44,48-49,51,53-60,62-74,77-91,95
+backend-web/app/services/platform_category_selection.py
+  s_ac82bf6519da46::t_b3cc81144218cf 1-164
+backend-web/app/services/platform_category_service.py
+  s_ac82bf6519da46::t_9f1de2a592d149 1-451
+backend-web/app/services/publish_account_capability_service.py
+  s_ac82bf6519da46::t_d33a1a779ec726 1-116
+backend-web/app/services/publish_execution_service.py
+  s_ac82bf6519da46::t_e7671e8b0c1195 26-31,238,254,257-262,266,268,279,285,287-327,329-336,345-346,349-363,365-368,370-373,375-395,397-404,406-409,413-414,456-458,469
+backend-web/app/services/xianyu_direct_payload.py
+  s_ac82bf6519da46::t_ded2713b82d656 1-186
+backend-web/app/services/xianyu_direct_publisher.py
+  s_ac82bf6519da46::t_a84ddf6cc75bfc 1-380
+backend-web/app/services/xianyu_personal_publisher.py
+  s_ac82bf6519da46::t_ec3440c457c914 1-221
+backend-web/app/services/xianyu_publisher.py
+  s_ac82bf6519da46::t_119c4f4c422bbf 343-345,365-366,369,378,594-653,1589-1749,1753-1756
+backend-web/pyproject.toml
+  s_ac82bf6519da46::t_b95c3c60e3dfc9 40
+common/db/compat.py
+  s_ac82bf6519da46::t_6d1f60b3b1b621 300-309,704-706
+common/db/error_messages.py
+  s_ac82bf6519da46::t_186a433442d6ee 1-32
+common/models/xy_account.py
+  s_ac82bf6519da46::t_2be1de155a2c22 86-88
+common/models/xy_order.py
+  s_ac82bf6519da46::t_5fa97f61f0650b 13,63-67
+common/schemas/account.py
+  s_ac82bf6519da46::t_d323f9ac72dd9b 27,136-140
+common/schemas/order.py
+  s_ac82bf6519da46::t_c362a6ce77d3cc 34
+common/services/captcha/orchestrator.py
+  s_ac82bf6519da46::t_d64efc4a51de13 2,4-5,119,138,141,192,248,253-254,257
+common/services/promotion_publish_execution_service.py
+  s_ac82bf6519da46::t_a462d65bd4ca63 159-160,163-165
+common/services/publish_address_service.py
+  s_ac82bf6519da46::t_e46e2c11eee24e 235-243
+common/services/publish_execution_service.py
+  s_ac82bf6519da46::t_227109fe4b3b1a 22-26,28,30,97,100-105,114,116-120,152,154-155,157-192
+common/services/xianyu_mtop.py
+  s_ac82bf6519da46::t_f35a1b29464c4e 118-123,129,155-156,158,162,180-181,188-189,195-216
+common/services/xianyu_publish_media.py
+  s_ac82bf6519da46::t_4b18e0d17d6ca6 1-184
+common/services/xianyu_publish_service.py
+  s_ac82bf6519da46::t_c2113b25d0a9be 6-7,27,32-58,60-90,94-96,98-100,103-105
+common/services/xianyu_publish_video.py
+  s_ac82bf6519da46::t_ce5da3438e57e2 1-508
+common/utils/local_video_upload.py
+  s_ac82bf6519da46::t_d182de9df92138 1-77
+common/utils/xianyu_utils.py
+  s_ac82bf6519da46::t_f987aa358339c6 23-28,116
+deploy.sh
+  s_ac82bf6519da46::t_7db4605a3606ea 114,166,288
+deploy_remote.sh
+  s_ac82bf6519da46::t_36bdaf97a42134 61,111,226
+docker-compose.yml
+  s_ac82bf6519da46::t_12ef65fef33e5d 23,149
+frontend/src/api/accounts.ts
+  s_ac82bf6519da46::t_d0a0a924f04ca7 73,153,283-287
+frontend/src/api/chatNew.ts
+  s_ac82bf6519da46::t_9c0385689ae350 35
+frontend/src/api/distribution.ts
+  s_ac82bf6519da46::t_385d61ef3dd11b 118,246,252
+frontend/src/api/productPublish.ts
+  s_ac82bf6519da46::t_1ebcd6e9ce8539 16-112,122-131,133-136,138-139,142,155-165,167-170,172-173,175-177,179,266-281,289-301,313,322,327,345-350,352,360-369,371-375,377,379-380,385,410-420
+frontend/src/api/publishAddresses.ts
+  s_ac82bf6519da46::t_bb3ccf1e414763 50-68,99-106
+frontend/src/pages/chat-new/CustomerOrdersPanel.tsx
+  s_ac82bf6519da46::t_6910b43929158a 97,99
+frontend/src/pages/distribution/FundFlows.tsx
+  s_ac82bf6519da46::t_cd87f1e659b54d 12,24-25,33-34,37-42,45,56,59,67,69,72,75-76,82,87,121-133,141,162,176,187-189
+frontend/src/pages/product-publish/AddressPickerModal.tsx
+  s_ac82bf6519da46::t_8ea01ea95e24eb 1-179
+frontend/src/pages/product-publish/BatchPublish.tsx
+  s_ac82bf6519da46::t_4ab4aa06642868 242,253,285-287,299-306,419
+frontend/src/pages/product-publish/MaterialFormModal.tsx
+  s_ac82bf6519da46::t_a51113e21d090d 2-3,5-6,9-17,19-21,23,31-134,138-140,143-152,154-157,160-163,165,167,171-187,191-206,210-222,225-228,230,240-242,244,246-249,251-262,264
+frontend/src/pages/product-publish/MaterialPickerModal.tsx
+  s_ac82bf6519da46::t_4317d7af336c9d 1-240
+frontend/src/pages/product-publish/PlatformAttributesEditor.tsx
+  s_ac82bf6519da46::t_499139931695cf 1-244
+frontend/src/pages/product-publish/PlatformCategoryRecommender.tsx
+  s_ac82bf6519da46::t_bc7d1c7f8734df 1-440
+frontend/src/pages/product-publish/ProductMaterials.tsx
+  s_ac82bf6519da46::t_cd8850bda038fa 23-32,53,64,68,102,129,150,225-226,236,238,257,273,275,282,286,317-320,322,386-387,397-399
+frontend/src/pages/product-publish/ProductPublish.tsx
+  s_ac82bf6519da46::t_c964737a9f2c55 1-3,5,7,9,11-37,43,46-47,51,54,56-58,60-94,97-116,118-119,124-144,146-147,149-150,156-177,181-200,202-205,207-210,216,218-222,230
+frontend/src/pages/product-publish/ProductPublishForm.tsx
+  s_ac82bf6519da46::t_d51aa845b285cb 1-140
+frontend/src/pages/product-publish/ProductSpecificationsEditor.tsx
+  s_ac82bf6519da46::t_763cc9280655bb 1-317
+frontend/src/pages/product-publish/ProductVideoUploader.tsx
+  s_ac82bf6519da46::t_86410bd8082ccd 1-59
+frontend/src/pages/product-publish/publishTypes.ts
+  s_ac82bf6519da46::t_298c7adcaeb913 1-92
+frontend/src/types/index.ts
+  s_ac82bf6519da46::t_5807cce2ba890d 63,179
+scripts/Pipeline脚本-xianyu-auto-reply.groovy
+  s_ac82bf6519da46::t_0a9072f0cdee17 122-123,156-157,190-191,224-225
+update.sh
+  s_ac82bf6519da46::t_69dc8cbd1be2b3 117,234,403
+websocket/.env.example
+  s_ac82bf6519da46::t_8bec5d4544eae8 38-39
+websocket/app/core/config.py
+  s_ac82bf6519da46::t_bdba4b9141b5d3 39,41
+websocket/app/services/xianyu/xianyu_async.py
+  s_ac82bf6519da46::t_e0e3da6498e560 36-38,812-833,839,859-861,863-864,909,915-917,956,961-963,1104-1122,1141-1148,1498-1500,1543-1558,1565,1588-1589,1600-1602
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "f68c81aaae628989ad2384e1b1247c8a981d2e69",
+  "prompts": {},
+  "logical_commit_id": "f68c81aaae628989ad2384e1b1247c8a981d2e69",
+  "sessions": {
+    "s_ac82bf6519da46": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00ebc-19c3-70b2-8fe8-2612e2bd05b2",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "masongzhi <masongzhi@bigo.sg>"
+    }
+  }
+}
