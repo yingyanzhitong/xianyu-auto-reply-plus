@@ -1145,8 +1145,7 @@ class OrderService:
         headers = {
             'accept': 'application/json',
             'content-type': 'application/x-www-form-urlencoded',
-            # 普通闲鱼订单接口不能携带 COMMONPRO 站点标识，
-            # 否则平台会返回 PERMISSION_EXCEPTION。
+            'idle_site_biz_code': 'COMMONPRO',
             'cookie': cookies_str,
             'Referer': 'https://seller.goofish.com/',
             'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/138.0.0.0 Safari/537.36',
@@ -1487,7 +1486,7 @@ class OrderService:
         headers = {
             'accept': 'application/json',
             'content-type': 'application/x-www-form-urlencoded',
-            # 与已售订单接口相同，退款列表也不能携带 COMMONPRO 站点标识。
+            'idle_site_biz_code': 'COMMONPRO',
             'cookie': cookies_str,
             'Referer': 'https://seller.goofish.com/?site=COMMONPRO',
             'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/138.0.0.0 Safari/537.36',
