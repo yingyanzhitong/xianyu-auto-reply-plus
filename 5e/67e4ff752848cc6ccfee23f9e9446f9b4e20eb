@@ -1,0 +1,32 @@
+CHANGELOG.md
+  s_e75ea2666064c5::t_bbb0d0af038464 3-7
+backend-web/app/api/routes/cookies.py
+  s_e75ea2666064c5::t_a76c95867e109a 113-118,128,171-172
+backend-web/tests/test_account_health.py
+  s_e75ea2666064c5::t_c8688563caa025 50-64
+common/services/order_service.py
+  s_e75ea2666064c5::t_75e8bdde258a10 874,883,885-933
+frontend/package.json
+  s_e75ea2666064c5::t_4243a589c11660 4
+frontend/src/pages/accounts/Accounts.tsx
+  s_e75ea2666064c5::t_0b09213f77787c 2517
+package.json
+  s_e75ea2666064c5::t_488f86a7acb92d 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "5e67e4ff752848cc6ccfee23f9e9446f9b4e20eb",
+  "prompts": {},
+  "logical_commit_id": "5e67e4ff752848cc6ccfee23f9e9446f9b4e20eb",
+  "sessions": {
+    "s_e75ea2666064c5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00d81-05aa-7683-861c-e92baf079c42",
+        "model": "unknown"
+      },
+      "human_author": "masongzhi <masongzhi@bigo.sg>"
+    }
+  }
+}
