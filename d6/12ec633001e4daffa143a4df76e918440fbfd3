@@ -1,0 +1,26 @@
+CHANGELOG.md
+  s_e75ea2666064c5::t_593bc3984a3bb8 3-6
+common/services/order_service.py
+  s_e75ea2666064c5::t_4d1e5664d45eb6 1148,1489
+frontend/package.json
+  s_e75ea2666064c5::t_0575b165e2b1dc 4
+package.json
+  s_e75ea2666064c5::t_d838f66abb3759 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "d612ec633001e4daffa143a4df76e918440fbfd3",
+  "prompts": {},
+  "logical_commit_id": "d612ec633001e4daffa143a4df76e918440fbfd3",
+  "sessions": {
+    "s_e75ea2666064c5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00d81-05aa-7683-861c-e92baf079c42",
+        "model": "unknown"
+      },
+      "human_author": "masongzhi <masongzhi@bigo.sg>"
+    }
+  }
+}
