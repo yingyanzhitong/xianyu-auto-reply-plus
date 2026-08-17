@@ -1,0 +1,28 @@
+CHANGELOG.md
+  s_e75ea2666064c5::t_b1685c0309149e 3,5
+backend-web/tests/test_order_request_headers.py
+  s_e75ea2666064c5::t_df073862ec5aca 1-76
+common/services/order_service.py
+  s_e75ea2666064c5::t_b2f33b8708c99e 874,883,1148-1149,1490
+frontend/package.json
+  s_e75ea2666064c5::t_10db53732ecf74 4
+package.json
+  s_e75ea2666064c5::t_8b8b1c7bf098de 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "4f45f76e238c085cc5e9585c2ce1e5a1a62b400b",
+  "prompts": {},
+  "logical_commit_id": "4f45f76e238c085cc5e9585c2ce1e5a1a62b400b",
+  "sessions": {
+    "s_e75ea2666064c5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00d81-05aa-7683-861c-e92baf079c42",
+        "model": "unknown"
+      },
+      "human_author": "masongzhi <masongzhi@bigo.sg>"
+    }
+  }
+}
