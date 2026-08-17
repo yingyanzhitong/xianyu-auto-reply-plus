@@ -51,6 +51,7 @@ export interface Account {
   cookie: string
   enabled: boolean
   online?: boolean  // 在线状态：是否已建立真实 WebSocket 连接（口径同仪表盘“在线账号”）
+  health?: AccountHealth
   use_ai_reply: boolean
   use_default_reply: boolean
   auto_confirm: boolean
@@ -78,6 +79,21 @@ export interface Account {
   disable_reason?: string
   created_at?: string
   updated_at?: string
+}
+
+export type AccountHealthItemStatus = 'ready' | 'warning' | 'blocked' | 'disabled' | 'unknown' | 'offline' | 'degraded'
+
+export interface AccountHealthItem {
+  status: AccountHealthItemStatus
+  label: string
+  detail: string
+}
+
+export interface AccountHealth {
+  overall: AccountHealthItem
+  connection: AccountHealthItem
+  token: AccountHealthItem
+  risk_control: AccountHealthItem
 }
 
 export interface AccountDetail extends Account {

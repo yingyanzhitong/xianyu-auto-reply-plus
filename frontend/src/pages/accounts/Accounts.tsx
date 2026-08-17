@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { FormEvent } from 'react'
+import type { FormEvent, MouseEvent as ReactMouseEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Plus, RefreshCw, QrCode, Key, Edit2, Trash2, Power, PowerOff, X, Loader2, Clock, CheckCircle, MessageSquare, Bot, Globe, Timer, ScanFace, ChevronLeft, ChevronRight, ChevronDown, ImagePlus, Filter, Repeat, MoreHorizontal, PackageCheck, Star, ShieldCheck, Flower2, Truck, Eye, EyeOff, Ban, Crosshair, Download, Upload, Send, AlertCircle } from 'lucide-react'
 import { getAccountDetailsPaginated, deleteAccount, updateAccountCookie, updateAccountStatus, updateAccountsStatusBatch, closeAccountsNoticeBatch, clearTokenCacheBatch, updateAccountRemark, addAccount, generateQRLogin, checkQRLoginStatus, passwordLogin, checkPasswordLoginStatus, cancelPasswordLogin, updateAccountAutoConfirm, updateAccountPauseDuration, updateAccountMessageExpireTime, updateAccountReplyDelay, updateAccountLoginInfo, updateAccountScheduledRedelivery, updateAccountScheduledRate, updateAccountAutoPolish, updateAccountConfirmBeforeSend, updateAccountSendBeforeConfirm, updateAccountAutoRedFlower, updateAccountRedFlowerAfterShipment, updateAccountAiReplyBlockOrderedUsers, updateAccountAiReplyBlockOrderedItems, getAIReplySettings, updateAIReplySettings, testAIConnection, fetchAIModels, AI_PROVIDER_OPTIONS, AI_PROVIDER_DEFAULT_BASE_URLS, getProxyConfig, updateProxyConfig, getFaceVerificationScreenshot, deleteFaceVerificationScreenshot, getConfirmReceiptMessage, updateConfirmReceiptMessage, uploadConfirmReceiptImage, exportAccountsExcel, importAccountsExcel, type AIProviderType, type AIModelOption, type ProxyConfig, type FaceVerificationScreenshot, type AccountFilterParams } from '@/api/accounts'
@@ -14,6 +14,7 @@ import { PageLoading } from '@/components/common/Loading'
 import { ConfirmModal } from '@/components/common/ConfirmModal'
 import { DeliveryBlockRulesModal } from './DeliveryBlockRulesModal'
 import { RefundCancelModal } from './RefundCancelModal'
+import { AccountHealthPopover } from './AccountHealthPopover'
 import type { AccountDetail } from '@/types'
 
 type ModalType = 'qrcode' | 'password' | 'manual' | 'edit' | 'default-reply' | 'ai-settings' | 'proxy-settings' | 'message-expire-time' | 'reply-delay' | 'face-verification' | 'confirm-receipt' | 'auto-rate' | 'delivery-disabled' | 'refund-cancel' | null
@@ -21,6 +22,12 @@ type ModalType = 'qrcode' | 'password' | 'manual' | 'edit' | 'default-reply' | '
 interface AccountWithKeywordCount extends AccountDetail {
   keywordCount?: number
   aiEnabled?: boolean
+}
+
+interface OnlineStatusPopoverState {
+  account: AccountWithKeywordCount
+  top: number
+  left: number
 }
 
 interface AccountPagination {
@@ -50,6 +57,34 @@ interface AIConfigSnapshot {
   base_url?: string
   api_key?: string
   model_name?: string
+}
+
+const getOnlineStatusStyle = (account: AccountWithKeywordCount) => {
+  if (!account.online) {
+    return {
+      badge: 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-400 dark:hover:bg-slate-600',
+      dot: 'bg-slate-400',
+    }
+  }
+
+  if (['degraded', 'blocked', 'warning'].includes(account.health?.overall.status || '')) {
+    return {
+      badge: 'bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:hover:bg-amber-900/50',
+      dot: 'bg-amber-500',
+    }
+  }
+
+  if (account.health?.overall.status === 'unknown') {
+    return {
+      badge: 'bg-sky-100 text-sky-700 hover:bg-sky-200 dark:bg-sky-900/30 dark:text-sky-300 dark:hover:bg-sky-900/50',
+      dot: 'bg-sky-500',
+    }
+  }
+
+  return {
+    badge: 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-300 dark:hover:bg-green-900/50',
+    dot: 'bg-emerald-500',
+  }
 }
 
 const getAIConfigMissingItems = (config: AIConfigSnapshot): string[] => {
@@ -113,6 +148,8 @@ export function Accounts() {
   // 更多操作下拉菜单状态
   const [moreMenuAccountId, setMoreMenuAccountId] = useState<string | null>(null)
   const [moreMenuPosition, setMoreMenuPosition] = useState<{ top: number; right: number }>({ top: 0, right: 0 })
+  const [onlineStatusPopover, setOnlineStatusPopover] = useState<OnlineStatusPopoverState | null>(null)
+  const onlineStatusPopoverRef = useRef<HTMLDivElement>(null)
 
   // 默认回复管理状态
   const [defaultReplyAccount, setDefaultReplyAccount] = useState<AccountWithKeywordCount | null>(null)
@@ -261,6 +298,45 @@ export function Accounts() {
   // 是否管理员：管理员可查看全量账号，需展示账号所属用户列
   const isAdmin = Boolean(user?.is_admin)
 
+  const handleOnlineStatusClick = (event: ReactMouseEvent<HTMLButtonElement>, account: AccountWithKeywordCount) => {
+    const rect = event.currentTarget.getBoundingClientRect()
+    if (onlineStatusPopover?.account.id === account.id) {
+      setOnlineStatusPopover(null)
+      return
+    }
+
+    setOnlineStatusPopover({
+      account,
+      top: Math.max(8, Math.min(rect.bottom + 8, window.innerHeight - 420)),
+      left: Math.max(8, Math.min(rect.left - 116, window.innerWidth - 328)),
+    })
+  }
+
+  useEffect(() => {
+    const closePopover = () => setOnlineStatusPopover(null)
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target
+      if (!(target instanceof Node)) return
+      if (onlineStatusPopoverRef.current?.contains(target)) return
+      if (target instanceof Element && target.closest('[data-account-health-trigger]')) return
+      closePopover()
+    }
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') closePopover()
+    }
+
+    document.addEventListener('pointerdown', handlePointerDown)
+    document.addEventListener('keydown', handleKeyDown)
+    window.addEventListener('resize', closePopover)
+    window.addEventListener('scroll', closePopover, true)
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown)
+      document.removeEventListener('keydown', handleKeyDown)
+      window.removeEventListener('resize', closePopover)
+      window.removeEventListener('scroll', closePopover, true)
+    }
+  }, [])
+
   const loadAccounts = async (page: number = pagination.page, pageSize: number = pagination.pageSize, currentFilters: AccountFilters = filters) => {
     if (!_hasHydrated || !isAuthenticated || !token) return
     try {
@@ -288,6 +364,7 @@ export function Accounts() {
 
       const result = await getAccountDetailsPaginated(page, pageSize, filterParams)
 
+      setOnlineStatusPopover(null)
       setAccounts(result.data)
       setSelectedAccountIds(prev => prev.filter(accountId => result.data.some(account => account.id === accountId)))
       setPagination({
@@ -2374,7 +2451,9 @@ export function Accounts() {
                     </td>
                   </tr>
                 ) : (
-                  accounts.map((account) => (
+                  accounts.map((account) => {
+                  const onlineStatusStyle = getOnlineStatusStyle(account)
+                  return (
                   <tr key={account.id}>
                     <td className="w-12">
                       <input
@@ -2430,14 +2509,17 @@ export function Accounts() {
                       </div>
                     </td>
                     <td>
-                      <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded ${
-                        account.online
-                          ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
-                          : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400'
-                      }`}>
-                        <span className={`status-dot ${account.online ? 'status-dot-success' : 'status-dot-danger'}`} />
+                      <button
+                        type="button"
+                        data-account-health-trigger
+                        onClick={(event) => handleOnlineStatusClick(event, account)}
+                        aria-expanded={onlineStatusPopover?.account.id === account.id}
+                        title="点击查看连接、Token 和风控状态"
+                        className={`inline-flex items-center gap-1.5 rounded px-2 py-1 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${onlineStatusStyle.badge}`}
+                      >
+                        <span className={`h-1.5 w-1.5 rounded-full ${onlineStatusStyle.dot}`} />
                         {account.online ? '在线' : '离线'}
-                      </span>
+                      </button>
                     </td>
                     <td>
                       <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded ${
@@ -2645,7 +2727,8 @@ export function Accounts() {
                       </div>
                     </td>
                   </tr>
-                ))
+                  )
+                })
               )}
             </tbody>
           </table>
@@ -4695,6 +4778,17 @@ export function Accounts() {
               「保存」按Excel中状态导入 · 「保存并全部启用」强制启用所有账号
             </p>
           </div>
+        </div>
+      )}
+
+      {onlineStatusPopover && (
+        <div ref={onlineStatusPopoverRef}>
+          <AccountHealthPopover
+            accountId={onlineStatusPopover.account.id}
+            health={onlineStatusPopover.account.health}
+            position={{ top: onlineStatusPopover.top, left: onlineStatusPopover.left }}
+            onClose={() => setOnlineStatusPopover(null)}
+          />
         </div>
       )}
     </div>

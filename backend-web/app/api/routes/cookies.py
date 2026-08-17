@@ -15,8 +15,10 @@ from sqlalchemy import func, select, text
 
 from app.api import deps
 from common.models.user import User
+from common.models.risk_control_log import XYRiskControlLog
+from common.models.token_cache import TokenCache
 from common.models.xy_account import XYAccount
-from common.utils.time_utils import safe_isoformat
+from common.utils.time_utils import get_beijing_now_naive, safe_isoformat
 from common.schemas.account import (
     AccountAutoConfirmUpdate,
     AccountAutoPolishUpdate,
@@ -47,6 +49,7 @@ from common.schemas.common import ApiResponse
 from common.services.ai_provider_service import read_ai_enabled
 from common.services.token_renewal_cache_service import mark_token_cache_expired
 from common.utils.auth_scope import resolve_owner_scope
+from common.utils.token_cache import TokenCacheValidity, classify_token_cache_validity
 from common.utils.xianyu_utils import close_account_notice
 from app.services.account_service import AccountService
 from app.services.auto_reply_stats_service import AutoReplyStatsService
@@ -101,6 +104,124 @@ def _normalize_delivery_excluded_items(raw: object) -> list[str]:
         if text_item:
             result.append(text_item)
     return result
+
+
+def _health_item(status: str, label: str, detail: str) -> dict[str, str]:
+    return {"status": status, "label": label, "detail": detail}
+
+
+def _build_account_health(
+    account: XYAccount,
+    *,
+    is_online: bool,
+    token_cache: TokenCache | None,
+    has_processing_risk: bool,
+) -> dict[str, object]:
+    """构建账号面向运营者的运行健康度，不暴露 Token 或 AI 密钥。"""
+    account_enabled = _status_to_enabled(account.status)
+
+    connection = _health_item(
+        "ready" if is_online else "blocked",
+        "连接",
+        "WebSocket 连接正常" if is_online else "WebSocket 未连接",
+    )
+
+    token_validity: TokenCacheValidity | None = None
+    if not account.unb:
+        token = _health_item("unknown", "Token", "未识别账号身份，无法确认 Token 有效期")
+    elif token_cache is None:
+        token = _health_item("unknown", "Token", "未找到 Token 缓存，无法确认有效期")
+    else:
+        token_validity = classify_token_cache_validity(
+            token_cache.expire_at,
+            token_cache.renew_expire_at,
+            get_beijing_now_naive(),
+        )
+        if token_validity == TokenCacheValidity.CURRENT:
+            token = _health_item("ready", "Token", "原始 Token 有效")
+        elif token_validity == TokenCacheValidity.RENEWED:
+            token = _health_item("ready", "Token", "续期 Token 有效")
+        else:
+            token = _health_item("blocked", "Token", "原始 Token 和续期 Token 均已过期")
+
+    risk_control = _health_item(
+        "blocked" if has_processing_risk else "ready",
+        "风控",
+        "存在处理中的滑块风控任务，Token 刷新会被跳过"
+        if has_processing_risk
+        else "无处理中的风控任务",
+    )
+
+    blocking_reason = ""
+    if not account_enabled:
+        blocking_reason = "账号已禁用"
+    elif not is_online:
+        blocking_reason = "WebSocket 未连接"
+    elif token_validity == TokenCacheValidity.EXPIRED:
+        blocking_reason = "Token 已过期"
+    elif has_processing_risk:
+        blocking_reason = "风控任务处理中"
+
+    if not account_enabled:
+        overall = _health_item("disabled", "账号已禁用", "请先启用账号后再检查连接")
+    elif not is_online:
+        overall = _health_item("offline", "连接离线", "请启动账号或检查 WebSocket 服务")
+    elif blocking_reason:
+        overall = _health_item("degraded", "连接在线，业务受阻", blocking_reason)
+    elif token_validity is None:
+        overall = _health_item("unknown", "连接在线，状态待确认", "未读取到 Token 缓存")
+    else:
+        overall = _health_item("ready", "运行正常", "连接和 Token 状态正常")
+
+    return {
+        "overall": overall,
+        "connection": connection,
+        "token": token,
+        "risk_control": risk_control,
+    }
+
+
+async def _build_account_health_map(
+    accounts: list[XYAccount],
+    online_ids: frozenset[str],
+    session,
+) -> dict[str, dict[str, object]]:
+    """批量加载列表页所需的 Token 与风控状态，避免逐账号查询。"""
+    account_ids = [account.account_id for account in accounts]
+    unb_ids = [account.unb for account in accounts if account.unb]
+    token_by_user_id: dict[str, TokenCache] = {}
+    processing_risk_account_ids: set[str] = set()
+
+    if unb_ids:
+        token_result = await session.execute(
+            select(TokenCache).where(TokenCache.user_id.in_(unb_ids))
+        )
+        token_by_user_id = {
+            token.user_id: token for token in token_result.scalars().all()
+        }
+
+    if account_ids:
+        risk_result = await session.execute(
+            select(XYRiskControlLog.account_identifier).where(
+                XYRiskControlLog.account_identifier.in_(account_ids),
+                XYRiskControlLog.processing_status == "processing",
+            )
+        )
+        processing_risk_account_ids = {
+            account_id
+            for account_id in risk_result.scalars().all()
+            if account_id
+        }
+
+    return {
+        account.account_id: _build_account_health(
+            account,
+            is_online=account.account_id in online_ids,
+            token_cache=token_by_user_id.get(account.unb or ""),
+            has_processing_risk=account.account_id in processing_risk_account_ids,
+        )
+        for account in accounts
+    }
 
 
 def _normalize_batch_account_ids(account_ids: list[str]) -> list[str]:
@@ -334,6 +455,8 @@ async def list_cookie_details_paginated(
     if account_ids:
         today_reply_counts = await AutoReplyStatsService(session).get_today_success_reply_counts_by_account(account_ids)
 
+    health_status_map = await _build_account_health_map(accounts, online_ids, session)
+
     details = []
     for account in accounts:
         ai_settings = (account.metadata_json or {}).get("ai_reply_settings") or {}
@@ -372,6 +495,7 @@ async def list_cookie_details_paginated(
             "today_reply_count": today_reply_counts.get(account.account_id, 0),
             "keyword_count": keyword_counts.get(account.id, 0),
             "ai_enabled": read_ai_enabled(ai_settings),
+            "health": health_status_map.get(account.account_id),
             "owner_id": account.owner_id,
             "owner_username": owner_username_map.get(account.owner_id, ""),
             "created_at": safe_isoformat(account.created_at),
