@@ -445,6 +445,7 @@ class DatabaseInitializer:
                 scheduled_rate TINYINT(1) NOT NULL DEFAULT 0 COMMENT '定时补评价开关',
                 auto_polish TINYINT(1) NOT NULL DEFAULT 0 COMMENT '商品自动擦亮开关',
                 confirm_before_send TINYINT(1) NOT NULL DEFAULT 0 COMMENT '发货成功再发卡券开关',
+                only_send_card TINYINT(1) NOT NULL DEFAULT 0 COMMENT '只发卡券不确认发货开关',
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
                 INDEX idx_owner_id (owner_id),
@@ -522,6 +523,7 @@ class DatabaseInitializer:
                 receiver_phone VARCHAR(32) COMMENT '收货人手机号',
                 receiver_address VARCHAR(512) COMMENT '收货地址',
                 delivery_fail_reason VARCHAR(2000) COMMENT '发货失败原因',
+                card_only_delivered TINYINT(1) NOT NULL DEFAULT 0 COMMENT '仅发卡券流程是否已处理',
                 item_snapshot JSON COMMENT '商品快照',
                 metadata JSON COMMENT '元数据',
                 source VARCHAR(32) COMMENT '数据来源：fetch_xianyu-获取闲鱼订单按钮',
@@ -1262,21 +1264,40 @@ class DatabaseInitializer:
                 price DECIMAL(12,2) NOT NULL COMMENT '价格',
                 original_price DECIMAL(12,2) DEFAULT NULL COMMENT '原价（划线价）',
                 category VARCHAR(100) DEFAULT NULL COMMENT '商品分类',
+                platform_category_id VARCHAR(64) DEFAULT NULL COMMENT '平台末级分类ID（catId）',
+                platform_category_name VARCHAR(100) DEFAULT NULL COMMENT '平台末级分类名称（catName）',
+                platform_channel_category_id VARCHAR(64) DEFAULT NULL COMMENT '平台频道分类ID（channelCatId）',
+                platform_channel_category_name VARCHAR(100) DEFAULT NULL COMMENT '平台频道分类名称（channelCatName）',
+                platform_leaf_id VARCHAR(64) DEFAULT NULL COMMENT '平台叶子分类ID（leafId）',
+                platform_tb_category_id VARCHAR(64) DEFAULT NULL COMMENT '淘宝分类ID（tbCatId）',
+                platform_category_path JSON DEFAULT NULL COMMENT '平台多级分类路径（各级ID和名称）',
+                platform_attributes JSON DEFAULT NULL COMMENT '平台属性标签列表（itemLabelExtList）',
+                category_source VARCHAR(20) NOT NULL DEFAULT 'manual' COMMENT '分类来源：manual-手动，recommendation-推荐',
+                category_confidence DECIMAL(8,6) DEFAULT NULL COMMENT '分类推荐置信度',
                 images JSON DEFAULT NULL COMMENT '图片URL列表（最多9张）',
+                videos JSON DEFAULT NULL COMMENT '视频素材列表（URL、文件ID、尺寸等）',
+                specifications JSON DEFAULT NULL COMMENT '商品规格列表',
+                sku_rows JSON DEFAULT NULL COMMENT '规格组合价格和库存列表',
+                quantity INT NOT NULL DEFAULT 1 COMMENT '发布数量',
                 delivery_method VARCHAR(20) DEFAULT 'express' COMMENT '发货方式：express-快递, pickup-自提',
+                shipping_method VARCHAR(20) DEFAULT 'free' COMMENT '运费方式：free/distance/fixed/template/none',
+                support_pickup TINYINT(1) NOT NULL DEFAULT 0 COMMENT '是否支持自提',
                 postage DECIMAL(8,2) DEFAULT 0 COMMENT '邮费，0表示包邮',
                 address VARCHAR(200) DEFAULT NULL COMMENT '宝贝所在地',
+                address_expected_text VARCHAR(200) DEFAULT NULL COMMENT '所在地选择时的期望文本',
                 brand VARCHAR(100) DEFAULT NULL COMMENT '品牌',
                 `condition` VARCHAR(20) DEFAULT '全新' COMMENT '成色',
                 remark VARCHAR(500) DEFAULT NULL COMMENT '备注（仅内部使用）',
                 source_type VARCHAR(32) DEFAULT NULL COMMENT '外部素材来源类型',
                 source_item_id VARCHAR(128) DEFAULT NULL COMMENT '外部来源商品ID',
                 source_content_hash VARCHAR(64) DEFAULT NULL COMMENT '外部来源内容哈希',
+                is_deleted TINYINT(1) NOT NULL DEFAULT 0 COMMENT '是否已删除（软删除）',
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
                 INDEX idx_user_id (user_id),
                 INDEX idx_created_at (created_at),
                 INDEX idx_pm_user_created (user_id, created_at),
+                INDEX idx_pm_platform_category (platform_category_id),
                 UNIQUE KEY uk_pm_user_source_item (user_id, source_type, source_item_id)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='商品素材库表';
         """,
@@ -1751,6 +1772,26 @@ class DatabaseInitializer:
         "xy_token_cache": [
             ("renew_expire_at", "DATETIME DEFAULT NULL COMMENT '续期Token过期时间'", "expire_at"),
         ],
+        "xy_product_materials": [
+            ("platform_category_id", "VARCHAR(64) DEFAULT NULL COMMENT '平台末级分类ID（catId）'", "category"),
+            ("platform_category_name", "VARCHAR(100) DEFAULT NULL COMMENT '平台末级分类名称（catName）'", "platform_category_id"),
+            ("platform_channel_category_id", "VARCHAR(64) DEFAULT NULL COMMENT '平台频道分类ID（channelCatId）'", "platform_category_name"),
+            ("platform_channel_category_name", "VARCHAR(100) DEFAULT NULL COMMENT '平台频道分类名称（channelCatName）'", "platform_channel_category_id"),
+            ("platform_leaf_id", "VARCHAR(64) DEFAULT NULL COMMENT '平台叶子分类ID（leafId）'", "platform_channel_category_name"),
+            ("platform_tb_category_id", "VARCHAR(64) DEFAULT NULL COMMENT '淘宝分类ID（tbCatId）'", "platform_leaf_id"),
+            ("platform_category_path", "JSON DEFAULT NULL COMMENT '平台多级分类路径（各级ID和名称）'", "platform_tb_category_id"),
+            ("platform_attributes", "JSON DEFAULT NULL COMMENT '平台属性标签列表（itemLabelExtList）'", "platform_category_path"),
+            ("category_source", "VARCHAR(20) NOT NULL DEFAULT 'manual' COMMENT '分类来源：manual-手动，recommendation-推荐'", "platform_attributes"),
+            ("category_confidence", "DECIMAL(8,6) DEFAULT NULL COMMENT '分类推荐置信度'", "category_source"),
+            ("videos", "JSON DEFAULT NULL COMMENT '视频素材列表（URL、文件ID、尺寸等）'", "images"),
+            ("specifications", "JSON DEFAULT NULL COMMENT '商品规格列表'", "videos"),
+            ("sku_rows", "JSON DEFAULT NULL COMMENT '规格组合价格和库存列表'", "specifications"),
+            ("quantity", "INT NOT NULL DEFAULT 1 COMMENT '发布数量'", "sku_rows"),
+            ("shipping_method", "VARCHAR(20) DEFAULT 'free' COMMENT '运费方式：free/distance/fixed/template/none'", "delivery_method"),
+            ("support_pickup", "TINYINT(1) NOT NULL DEFAULT 0 COMMENT '是否支持自提'", "shipping_method"),
+            ("address_expected_text", "VARCHAR(200) DEFAULT NULL COMMENT '所在地选择时的期望文本'", "address"),
+            ("is_deleted", "TINYINT(1) NOT NULL DEFAULT 0 COMMENT '是否已删除（软删除）'", "remark"),
+        ],
         "xy_listing_monitor_tasks": [
             ("monitor_type", "VARCHAR(20) NOT NULL DEFAULT 'listing' COMMENT '监控类型：listing-上新监控，price_drop-降价监控'", "owner_id"),
             ("category_id", "BIGINT DEFAULT NULL COMMENT '所属分类ID（NULL=未分类）'", "owner_id"),
@@ -1821,6 +1862,7 @@ class DatabaseInitializer:
             ("auto_polish", "TINYINT(1) NOT NULL DEFAULT 0 COMMENT '商品自动擦亮开关'", "scheduled_rate"),
             ("confirm_before_send", "TINYINT(1) NOT NULL DEFAULT 0 COMMENT '发货成功再发卡券开关'", "auto_polish"),
             ("send_before_confirm", "TINYINT(1) NOT NULL DEFAULT 0 COMMENT '卡券发送成功再确认发货开关'", "confirm_before_send"),
+            ("only_send_card", "TINYINT(1) NOT NULL DEFAULT 0 COMMENT '只发卡券不确认发货开关'", "send_before_confirm"),
             ("auto_red_flower", "TINYINT(1) NOT NULL DEFAULT 0 COMMENT '自动求小红花开关'", "send_before_confirm"),
             ("red_flower_after_shipment", "TINYINT(1) NOT NULL DEFAULT 0 COMMENT '求小红花仅已发货/已完成订单'", "auto_red_flower"),
             ("delivery_disabled", "TINYINT(1) NOT NULL DEFAULT 0 COMMENT '禁止发货开关'", "red_flower_after_shipment"),
@@ -1835,6 +1877,7 @@ class DatabaseInitializer:
             ("refund_cancel_timeout", "INT DEFAULT 60 COMMENT '退款订单注销超时时间(秒)'", "refund_cancel_url"),
         ],
         "xy_orders": [
+            ("card_only_delivered", "TINYINT(1) NOT NULL DEFAULT 0 COMMENT '仅发卡券流程是否已处理'", "delivery_fail_reason"),
             ("is_bargain", "TINYINT(1) DEFAULT 0 COMMENT '是否小刀'", "account_name"),
             ("chat_id", "VARCHAR(64) COMMENT '聊天会话ID'", "buyer_id"),
             ("buyer_fish_nick", "VARCHAR(120) COMMENT '买家闲鱼昵称（明文）'", "buyer_nick"),
@@ -1884,9 +1927,27 @@ class DatabaseInitializer:
             ("expire_at", "DATETIME DEFAULT NULL COMMENT '账号到期日（精确到秒，NULL=永不过期）'", "api_key_last_used_at"),
         ],
         "xy_product_materials": [
+            ("platform_category_id", "VARCHAR(64) DEFAULT NULL COMMENT '平台末级分类ID（catId）'", "category"),
+            ("platform_category_name", "VARCHAR(100) DEFAULT NULL COMMENT '平台末级分类名称（catName）'", "platform_category_id"),
+            ("platform_channel_category_id", "VARCHAR(64) DEFAULT NULL COMMENT '平台频道分类ID（channelCatId）'", "platform_category_name"),
+            ("platform_channel_category_name", "VARCHAR(100) DEFAULT NULL COMMENT '平台频道分类名称（channelCatName）'", "platform_channel_category_id"),
+            ("platform_leaf_id", "VARCHAR(64) DEFAULT NULL COMMENT '平台叶子分类ID（leafId）'", "platform_channel_category_name"),
+            ("platform_tb_category_id", "VARCHAR(64) DEFAULT NULL COMMENT '淘宝分类ID（tbCatId）'", "platform_leaf_id"),
+            ("platform_category_path", "JSON DEFAULT NULL COMMENT '平台多级分类路径（各级ID和名称）'", "platform_tb_category_id"),
+            ("platform_attributes", "JSON DEFAULT NULL COMMENT '平台属性标签列表（itemLabelExtList）'", "platform_category_path"),
+            ("category_source", "VARCHAR(20) NOT NULL DEFAULT 'manual' COMMENT '分类来源：manual-手动，recommendation-推荐'", "platform_attributes"),
+            ("category_confidence", "DECIMAL(8,6) DEFAULT NULL COMMENT '分类推荐置信度'", "category_source"),
+            ("videos", "JSON DEFAULT NULL COMMENT '视频素材列表（URL、文件ID、尺寸等）'", "images"),
+            ("specifications", "JSON DEFAULT NULL COMMENT '商品规格列表'", "videos"),
+            ("sku_rows", "JSON DEFAULT NULL COMMENT '规格组合价格和库存列表'", "specifications"),
+            ("quantity", "INT NOT NULL DEFAULT 1 COMMENT '发布数量'", "sku_rows"),
+            ("shipping_method", "VARCHAR(20) DEFAULT 'free' COMMENT '运费方式：free/distance/fixed/template/none'", "delivery_method"),
+            ("support_pickup", "TINYINT(1) NOT NULL DEFAULT 0 COMMENT '是否支持自提'", "shipping_method"),
+            ("address_expected_text", "VARCHAR(200) DEFAULT NULL COMMENT '所在地选择时的期望文本'", "address"),
             ("source_type", "VARCHAR(32) DEFAULT NULL COMMENT '外部素材来源类型'", "remark"),
             ("source_item_id", "VARCHAR(128) DEFAULT NULL COMMENT '外部来源商品ID'", "source_type"),
             ("source_content_hash", "VARCHAR(64) DEFAULT NULL COMMENT '外部来源内容哈希'", "source_item_id"),
+            ("is_deleted", "TINYINT(1) NOT NULL DEFAULT 0 COMMENT '是否已删除（软删除）'", "source_content_hash"),
         ],
         "xy_default_replies": [
             ("item_id", "VARCHAR(64) DEFAULT NULL COMMENT '商品ID'", "account_id"),
@@ -2174,6 +2235,25 @@ class DatabaseInitializer:
                         logger.info(f"✓ xy_cards: {card_col} 字段已升级为 LONGTEXT")
                 except Exception as e:
                     logger.warning(f"✗ xy_cards {card_col} 字段迁移失败: {e}")
+
+            # 归一化历史冲突配置：只发卡券模式优先于自动确认及确认顺序设置。
+            try:
+                result = await conn.execute(text("""
+                    UPDATE xy_accounts
+                    SET auto_confirm = 0,
+                        confirm_before_send = 0,
+                        send_before_confirm = 0
+                    WHERE only_send_card = 1
+                      AND (
+                          auto_confirm <> 0
+                          OR confirm_before_send <> 0
+                          OR send_before_confirm <> 0
+                      )
+                """))
+                if result.rowcount:
+                    logger.info(f"✓ xy_accounts: 已修复 {result.rowcount} 条只发卡券冲突配置")
+            except Exception as e:
+                logger.warning(f"✗ xy_accounts 发货开关冲突配置修复失败: {e}")
 
     async def migrate_indexes(self):
         """检查并迁移索引（如更新 UNIQUE KEY 等）"""
@@ -2944,6 +3024,23 @@ class DatabaseInitializer:
                     logger.info("✓ xy_product_materials: 创建 uk_pm_user_source_item 唯一索引")
             except Exception as e:
                 logger.warning(f"✗ xy_product_materials 外部素材唯一索引创建失败: {e}")
+
+            # 为 xy_product_materials 补建平台分类索引
+            try:
+                check = text("""
+                    SELECT COUNT(*) FROM information_schema.STATISTICS
+                    WHERE TABLE_SCHEMA = DATABASE()
+                    AND TABLE_NAME = 'xy_product_materials'
+                    AND INDEX_NAME = 'idx_pm_platform_category'
+                """)
+                result = await conn.execute(check)
+                if result.scalar() == 0:
+                    await conn.execute(text(
+                        "ALTER TABLE xy_product_materials ADD INDEX idx_pm_platform_category (platform_category_id)"
+                    ))
+                    logger.info("✓ xy_product_materials: 创建 idx_pm_platform_category 索引")
+            except Exception as e:
+                logger.warning(f"✗ xy_product_materials idx_pm_platform_category 创建失败: {e}")
 
             # 为 xy_publish_logs 补建 (user_id, created_at) 复合索引
             try:

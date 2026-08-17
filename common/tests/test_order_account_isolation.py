@@ -25,6 +25,7 @@ class OrderAccountIsolationTest(unittest.TestCase):
             "update_order_delivery_fail_reason",
             "update_order_delivery_info",
             "record_delivery_for_closed_order",
+            "record_card_only_delivery",
             "update_order_status",
         ):
             source = _function_source(path, "OrderService", name)

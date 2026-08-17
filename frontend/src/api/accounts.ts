@@ -70,6 +70,7 @@ export const getAccountDetailsPaginated = async (
     auto_polish?: boolean
     confirm_before_send?: boolean
     send_before_confirm?: boolean
+    only_send_card?: boolean
     auto_red_flower?: boolean
     red_flower_after_shipment?: boolean
     ai_reply_block_ordered_users?: boolean
@@ -149,6 +150,7 @@ export const getAccountDetailsPaginated = async (
       auto_polish: item.auto_polish || false,
       confirm_before_send: item.confirm_before_send || false,
       send_before_confirm: item.send_before_confirm || false,
+      only_send_card: item.only_send_card || false,
       auto_red_flower: item.auto_red_flower || false,
       red_flower_after_shipment: item.red_flower_after_shipment || false,
       ai_reply_block_ordered_users: item.ai_reply_block_ordered_users || false,
@@ -278,6 +280,11 @@ export const updateAccountConfirmBeforeSend = (id: string, confirmBeforeSend: bo
 // 更新卡券发送成功再确认发货开关
 export const updateAccountSendBeforeConfirm = (id: string, sendBeforeConfirm: boolean): Promise<ApiResponse> => {
   return put(`${COOKIE_PREFIX}/${id}/send-before-confirm`, { send_before_confirm: sendBeforeConfirm })
+}
+
+// 更新只发卡券、不确认发货开关
+export const updateAccountOnlySendCard = (id: string, onlySendCard: boolean): Promise<ApiResponse> => {
+  return put(`${COOKIE_PREFIX}/${id}/only-send-card`, { only_send_card: onlySendCard })
 }
 
 
