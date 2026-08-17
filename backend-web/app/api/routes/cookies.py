@@ -110,12 +110,6 @@ def _health_item(status: str, label: str, detail: str) -> dict[str, str]:
     return {"status": status, "label": label, "detail": detail}
 
 
-def _has_order_sync_permission_error(account: XYAccount) -> bool:
-    """判断最近一次卖家订单同步是否被闲鱼明确拒绝权限。"""
-    metadata = getattr(account, "metadata_json", None)
-    return isinstance(metadata, dict) and metadata.get("order_sync_permission") == "denied"
-
-
 def _build_account_health(
     account: XYAccount,
     *,
@@ -125,7 +119,6 @@ def _build_account_health(
 ) -> dict[str, object]:
     """构建账号面向运营者的运行健康度，不暴露 Token 或 AI 密钥。"""
     account_enabled = _status_to_enabled(account.status)
-    has_order_sync_permission_error = _has_order_sync_permission_error(account)
 
     connection = _health_item(
         "ready" if is_online else "blocked",
@@ -168,8 +161,6 @@ def _build_account_health(
         blocking_reason = "Token 已过期"
     elif has_processing_risk:
         blocking_reason = "风控任务处理中"
-    elif has_order_sync_permission_error:
-        blocking_reason = "订单同步接口无权限"
 
     if not account_enabled:
         overall = _health_item("disabled", "账号已禁用", "请先启用账号后再检查连接")
