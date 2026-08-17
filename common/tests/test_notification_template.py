@@ -67,6 +67,22 @@ class NotificationTemplateTest(unittest.TestCase):
             "不支持的占位符: result",
         )
 
+    def test_chat_template_supports_reply_and_ai_status(self):
+        self.assertEqual(
+            render_notification_template(
+                {"chat_template": "买家：{{message}}\n回复：{{reply}}\nAI：{{ai_reply}}\n状态：{{ai_reply_status}}"},
+                "chat",
+                {
+                    "message": "有货吗",
+                    "reply": "有货，现货可拍",
+                    "ai_reply": "有货，现货可拍",
+                    "ai_reply_status": "",
+                },
+                "默认聊天正文",
+            ),
+            "买家：有货吗\n回复：有货，现货可拍\nAI：有货，现货可拍\n状态：",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

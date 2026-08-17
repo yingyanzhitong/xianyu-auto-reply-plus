@@ -88,7 +88,7 @@ class NotificationDispatchTest(unittest.IsolatedAsyncioTestCase):
                 {
                     "enabled": True,
                     "channel_type": "bark",
-                    "channel_config": {"device_key": "a", "chat_template": "{{buyer_nick}}: {{message}}"},
+                    "channel_config": {"device_key": "a", "chat_template": "{{buyer_nick}}: {{message}}|{{reply}}|{{ai_reply}}|{{ai_reply_status}}"},
                 }
             ],
         ), patch(
@@ -98,9 +98,38 @@ class NotificationDispatchTest(unittest.IsolatedAsyncioTestCase):
             "common.utils.notification_utils.send_bark_notification",
             new=AsyncMock(return_value=True),
         ) as bark_send:
-            await service._send_notification("小王", "buyer-1", "你好", "chat-1", "item-1", "2026-08-11 11:00:00")
+            await service._send_notification(
+                "小王", "buyer-1", "你好", "chat-1", "item-1", "2026-08-11 11:00:00",
+                reply="您好，请问有什么可以帮您？",
+                ai_reply="您好，请问有什么可以帮您？",
+                ai_reply_status="已禁止（买家已下单）",
+            )
 
-        self.assertEqual(bark_send.await_args.args[1], "小王: 你好")
+        self.assertEqual(
+            bark_send.await_args.args[1],
+            "小王: 你好|您好，请问有什么可以帮您？|您好，请问有什么可以帮您？|已禁止（买家已下单）",
+        )
+
+    def test_ai_reply_status_describes_prohibited_reasons(self):
+        self.assertEqual(
+            AutoReplyService._get_ai_reply_status({"context_snapshot": {"ai_blocked_reason": "ordered_user"}}),
+            "已禁止（买家已下单）",
+        )
+        self.assertEqual(
+            AutoReplyService._get_ai_reply_status({"context_snapshot": {"ai_blocked_reason": "ordered_item"}}),
+            "已禁止（买家已下单当前商品）",
+        )
+        self.assertEqual(
+            AutoReplyService._get_ai_reply_status(
+                {
+                    "context_snapshot": {
+                        "ai_blocked_reason": "manual_reply_pause",
+                        "manual_reply_ai_pause_ends_at": "2026-08-13 12:00:00",
+                    }
+                }
+            ),
+            "已暂停（人工回复介入，恢复时间：2026-08-13 12:00:00）",
+        )
 
     async def test_account_template_receives_verification_link(self):
         manager = NotificationManager("seller-account-template")

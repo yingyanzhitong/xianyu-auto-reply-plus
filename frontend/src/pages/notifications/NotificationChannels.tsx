@@ -122,6 +122,9 @@ const templateVariables: Record<NotificationTemplateType, Array<{ name: string; 
     { name: 'buyer_nick', label: '买家昵称' },
     { name: 'buyer_id', label: '买家 ID' },
     { name: 'message', label: '消息内容' },
+    { name: 'reply', label: '自动回复内容' },
+    { name: 'ai_reply', label: 'AI 回复内容' },
+    { name: 'ai_reply_status', label: 'AI 回复状态' },
     { name: 'item_id', label: '商品 ID' },
     { name: 'chat_id', label: '聊天 ID' },
     { name: 'time', label: '通知时间' },
@@ -158,9 +161,14 @@ const templateVariables: Record<NotificationTemplateType, Array<{ name: string; 
 const defaultTemplates: Record<NotificationTemplateType, string> = {
   chat: `【闲鱼消息】
 闲鱼账号: {{account}}
+账号 ID: {{account_id}}
+账号备注: {{account_remark}}
 发送者: {{buyer_nick}}
 买家ID: {{buyer_id}}
 消息: {{message}}
+自动回复: {{reply}}
+AI 回复: {{ai_reply}}
+AI 回复状态: {{ai_reply_status}}
 商品ID: {{item_id}}
 聊天ID: {{chat_id}}
 时间: {{time}}`,

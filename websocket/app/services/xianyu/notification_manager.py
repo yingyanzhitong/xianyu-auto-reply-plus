@@ -59,8 +59,9 @@ class NotificationManager:
         """安全地将异常转换为字符串（委托公共实现）"""
         return safe_str(e)
 
-    async def send_notification(self, send_user_name: str, send_user_id: str, 
-                               send_message: str, item_id: str = None, chat_id: str = None):
+    async def send_notification(self, send_user_name: str, send_user_id: str,
+                               send_message: str, item_id: str = None, chat_id: str = None,
+                               reply: str = "", ai_reply: str = "", ai_reply_status: str = ""):
         """发送消息通知"""
         try:
             from common.db.compat import db_manager
@@ -126,10 +127,16 @@ class NotificationManager:
             account_desc = f"{self.cookie_id}({remark})" if remark else self.cookie_id
             notification_msg = f"🚨 接收消息通知\n\n" \
                              f"闲鱼账号: {account_desc}\n" \
+                             f"账号ID: {self.cookie_id}\n" \
+                             f"账号备注: {remark or '未知'}\n" \
                              f"买家: {send_user_name} (ID: {send_user_id})\n" \
+                             f"买家ID: {send_user_id or '未知'}\n" \
                              f"商品ID: {item_id or '未知'}\n" \
                              f"聊天ID: {chat_id or '未知'}\n" \
                              f"消息内容: {send_message}\n" \
+                             f"自动回复: {reply or ''}\n" \
+                             f"AI回复: {ai_reply or ''}\n" \
+                             f"AI回复状态: {ai_reply_status or ''}\n" \
                              f"时间: {time.strftime('%Y-%m-%d %H:%M:%S')}\n\n"
 
             # 发送通知到各渠道
@@ -144,6 +151,9 @@ class NotificationManager:
                     "buyer_nick": send_user_name or "未知",
                     "buyer_id": send_user_id or "未知",
                     "message": send_message or "",
+                    "reply": reply or "",
+                    "ai_reply": ai_reply or "",
+                    "ai_reply_status": ai_reply_status or "",
                     "item_id": item_id or "未知",
                     "chat_id": chat_id or "未知",
                     "time": time.strftime('%Y-%m-%d %H:%M:%S'),

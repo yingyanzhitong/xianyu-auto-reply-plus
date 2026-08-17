@@ -580,6 +580,20 @@ class AutoReplyService:
                 return True
         
         return False
+
+    @staticmethod
+    def _get_ai_reply_status(log_payload: Dict[str, Any]) -> str:
+        """获取用于消息通知的 AI 回复禁止状态。"""
+        context_snapshot = log_payload.get("context_snapshot") or {}
+        reason = context_snapshot.get("ai_blocked_reason")
+        if reason == "ordered_user":
+            return "已禁止（买家已下单）"
+        if reason == "ordered_item":
+            return "已禁止（买家已下单当前商品）"
+        if reason == "manual_reply_pause":
+            pause_ends_at = context_snapshot.get("manual_reply_ai_pause_ends_at")
+            return f"已暂停（人工回复介入，恢复时间：{pause_ends_at}）" if pause_ends_at else "已暂停（人工回复介入）"
+        return ""
     
     # ==================== 消息处理入口 ====================
     
@@ -720,6 +734,7 @@ class AutoReplyService:
             
             # 7. 获取并发送自动回复
             send_results: List[Dict[str, Any]] = []
+            reply: Optional[str] = None
             if not should_skip:
                 # 清除之前的待发送文本
                 log_payload.pop("pending_text_reply", None)
@@ -884,6 +899,9 @@ class AutoReplyService:
                     chat_id=chat_id,
                     item_id=item_id,
                     msg_time=msg_time,
+                    reply=log_payload.get("reply_text") or log_payload.get("reply_image_url") or "",
+                    ai_reply=reply if log_payload.get("reply_strategy") == "ai" else "",
+                    ai_reply_status=self._get_ai_reply_status(log_payload),
                 )
             
         except Exception as e:
@@ -1018,6 +1036,9 @@ class AutoReplyService:
         chat_id: str,
         item_id: str,
         msg_time: str,
+        reply: str = "",
+        ai_reply: str = "",
+        ai_reply_status: str = "",
     ) -> None:
         """发送消息通知
         
@@ -1028,6 +1049,9 @@ class AutoReplyService:
             chat_id: 会话ID
             item_id: 商品ID
             msg_time: 消息时间
+            reply: 实际自动回复内容（文本或图片地址）
+            ai_reply: 大模型生成的回复内容；非 AI 回复时为空
+            ai_reply_status: AI 回复禁止或暂停状态
         """
         try:
             from common.db.compat import db_manager
@@ -1051,10 +1075,16 @@ class AutoReplyService:
             account_desc = f"{self.cookie_id}({remark})" if remark else self.cookie_id
             notification_content = f"【闲鱼消息】\n"
             notification_content += f"闲鱼账号: {account_desc}\n"
+            notification_content += f"账号ID: {self.cookie_id}\n"
+            notification_content += f"账号备注: {remark or '未知'}\n"
             notification_content += f"发送者: {send_user_name}\n"
+            notification_content += f"买家ID: {send_user_id or '未知'}\n"
             notification_content += f"消息: {send_message}\n"
-            if item_id:
-                notification_content += f"商品ID: {item_id}\n"
+            notification_content += f"自动回复: {reply}\n"
+            notification_content += f"AI回复: {ai_reply}\n"
+            notification_content += f"AI回复状态: {ai_reply_status}\n"
+            notification_content += f"商品ID: {item_id or '未知'}\n"
+            notification_content += f"聊天ID: {chat_id or '未知'}\n"
             notification_content += f"时间: {msg_time}"
             template_context = {
                 "account": account_desc,
@@ -1063,6 +1093,9 @@ class AutoReplyService:
                 "buyer_nick": send_user_name or "未知",
                 "buyer_id": send_user_id or "未知",
                 "message": send_message or "",
+                "reply": reply or "",
+                "ai_reply": ai_reply or "",
+                "ai_reply_status": ai_reply_status or "",
                 "item_id": item_id or "未知",
                 "chat_id": chat_id or "未知",
                 "time": msg_time or time.strftime('%Y-%m-%d %H:%M:%S'),
@@ -1910,6 +1943,14 @@ class AutoReplyService:
                         f"剩余 {remaining} 秒"
                     )
                     if reply_trace is not None:
+                        reply_trace.setdefault("context_snapshot", {}).update({
+                            "ai_blocked_reason": "manual_reply_pause",
+                            "manual_reply_ai_pause_remaining_seconds": remaining,
+                            "manual_reply_ai_pause_ends_at": time.strftime(
+                                "%Y-%m-%d %H:%M:%S",
+                                time.localtime(time.time() + remaining),
+                            ),
+                        })
                         await self._record_manual_reply_ai_paused_log(
                             reply_trace, remaining, pause_minutes
                         )

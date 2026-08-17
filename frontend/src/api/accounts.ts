@@ -1,5 +1,5 @@
 import { get, post, put, del } from '@/utils/request'
-import type { AccountDetail, ApiResponse } from '@/types'
+import type { AccountDetail, AccountHealth, ApiResponse } from '@/types'
 
 // API前缀
 const COOKIE_PREFIX = '/api/v1/cookies'
@@ -63,6 +63,7 @@ export const getAccountDetailsPaginated = async (
     value: string
     enabled: boolean
     online?: boolean
+    health?: AccountHealth
     auto_confirm: boolean
     scheduled_redelivery?: boolean
     scheduled_rate?: boolean
@@ -141,6 +142,7 @@ export const getAccountDetailsPaginated = async (
       cookie: item.value,
       enabled: item.enabled,
       online: item.online ?? false,
+      health: item.health,
       auto_confirm: item.auto_confirm,
       scheduled_redelivery: item.scheduled_redelivery || false,
       scheduled_rate: item.scheduled_rate || false,
