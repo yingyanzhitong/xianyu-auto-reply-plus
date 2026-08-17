@@ -2514,7 +2514,7 @@ export function Accounts() {
                         data-account-health-trigger
                         onClick={(event) => handleOnlineStatusClick(event, account)}
                         aria-expanded={onlineStatusPopover?.account.id === account.id}
-                        title="点击查看连接、Token 和风控状态"
+                        title="点击查看运行状态"
                         className={`inline-flex items-center gap-1.5 rounded px-2 py-1 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${onlineStatusStyle.badge}`}
                       >
                         <span className={`h-1.5 w-1.5 rounded-full ${onlineStatusStyle.dot}`} />

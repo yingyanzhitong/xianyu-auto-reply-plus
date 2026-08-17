@@ -871,7 +871,7 @@ class OrderService:
                         'failed': 0,
                         'errors': ['账号同步锁被占用，已跳过'],
                     }
-                return await self._fetch_xianyu_orders_impl(
+                result = await self._fetch_xianyu_orders_impl(
                     account, query_code, max_pages
                 )
         except Exception as e:
@@ -880,8 +880,57 @@ class OrderService:
                 f"获取闲鱼订单: 账号 {account_id} 获取同步锁异常，"
                 f"降级无锁执行（依赖唯一约束兜底）: {e}"
             )
-            return await self._fetch_xianyu_orders_impl(
+            result = await self._fetch_xianyu_orders_impl(
                 account, query_code, max_pages
+            )
+
+        await self._update_order_permission_health(account_id, result.get('errors', []))
+        return result
+
+    async def _update_order_permission_health(
+        self,
+        account_id: str,
+        errors: list[str],
+    ) -> None:
+        """将卖家订单接口的权限失败写入账号健康状态。
+
+        WebSocket、IM Token 与闲鱼卖家订单接口互相独立。仅当接口明确返回
+        ``PERMISSION_EXCEPTION`` 时才记录为订单权限受阻；其他临时同步错误
+        不影响账号在线状态。后续一次无错误的订单同步会自动清除此标记。
+        """
+        has_permission_error = any(
+            'PERMISSION_EXCEPTION' in str(error)
+            for error in errors
+        )
+
+        try:
+            account_result = await self.session.execute(
+                select(XYAccount).where(XYAccount.account_id == account_id)
+            )
+            persisted_account = account_result.scalar_one_or_none()
+            if not persisted_account:
+                return
+
+            metadata = dict(persisted_account.metadata_json or {})
+            health_key = 'order_sync_permission'
+
+            if has_permission_error:
+                if metadata.get(health_key) == 'denied':
+                    return
+                metadata[health_key] = 'denied'
+            elif not errors:
+                if health_key not in metadata:
+                    return
+                metadata.pop(health_key, None)
+            else:
+                return
+
+            persisted_account.metadata_json = metadata
+            await self.session.commit()
+        except Exception as e:
+            await self.session.rollback()
+            logger.warning(
+                f"获取闲鱼订单: 账号 {account_id} 更新订单权限健康状态失败: {e}"
             )
 
     async def _fetch_xianyu_orders_impl(

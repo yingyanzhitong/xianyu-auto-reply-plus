@@ -47,3 +47,18 @@ def test_valid_token_marks_connection_as_ready():
 
     assert health["overall"]["status"] == "ready"
     assert health["connection"]["status"] == "ready"
+
+
+def test_order_permission_error_marks_online_account_as_business_blocked():
+    health = _build_account_health(
+        _account(metadata_json={"order_sync_permission": "denied"}),
+        is_online=True,
+        token_cache=_token_cache(1),
+        has_processing_risk=False,
+    )
+
+    assert health["overall"] == {
+        "status": "degraded",
+        "label": "连接在线，业务受阻",
+        "detail": "订单同步接口无权限",
+    }
