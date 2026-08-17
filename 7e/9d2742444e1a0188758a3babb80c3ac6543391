@@ -1,0 +1,24 @@
+CHANGELOG.md
+  s_e75ea2666064c5::t_12235234022d3a 3-6
+frontend/package.json
+  s_e75ea2666064c5::t_3b5ac3f2a168ef 4
+package.json
+  s_e75ea2666064c5::t_8c876aaeb1b57e 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "7e9d2742444e1a0188758a3babb80c3ac6543391",
+  "prompts": {},
+  "logical_commit_id": "7e9d2742444e1a0188758a3babb80c3ac6543391",
+  "sessions": {
+    "s_e75ea2666064c5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00d81-05aa-7683-861c-e92baf079c42",
+        "model": "unknown"
+      },
+      "human_author": "masongzhi <masongzhi@bigo.sg>"
+    }
+  }
+}
