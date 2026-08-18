@@ -28,6 +28,7 @@ from app.services.account_service import AccountService
 from app.services.platform_category_service import CategoryRecommendationError, PlatformCategoryService
 from app.services.publish_batch_status_service import PublishBatchStatusService
 from app.services.publish_execution_service import PublishExecutorService, PublishLogService
+from common.services.xianyu_publish_service import detect_publish_account_capability
 from common.models.user import User, UserRole
 from common.schemas.common import ApiResponse
 from common.utils.local_image_upload import ImageUploadError, save_uploaded_image
@@ -209,11 +210,28 @@ class ExternalMaterialItem(BaseModel):
     title: str = Field(..., min_length=1, max_length=200)
     description: str = Field(..., min_length=1)
     price: float = Field(..., gt=0)
+    original_price: Optional[float] = Field(None, gt=0)
     images: List[str] = Field(..., min_length=1, max_length=9)
     category: Optional[str] = Field(None, max_length=100)
+    platform_category_id: Optional[str] = Field(None, max_length=64)
+    platform_category_name: Optional[str] = Field(None, max_length=100)
+    platform_channel_category_id: Optional[str] = Field(None, max_length=64)
+    platform_channel_category_name: Optional[str] = Field(None, max_length=100)
+    platform_leaf_id: Optional[str] = Field(None, max_length=64)
+    platform_tb_category_id: Optional[str] = Field(None, max_length=64)
+    platform_category_path: List[PlatformCategoryPathItemRequest] = Field(default_factory=list)
+    platform_attributes: List[PlatformAttributeRequest] = Field(default_factory=list, max_length=30)
+    category_source: str = Field("manual", pattern="^(manual|recommendation)$")
+    category_confidence: Optional[float] = Field(None, ge=0, le=1)
+    specifications: List[ProductSpecificationRequest] = Field(default_factory=list, max_length=2)
+    sku_rows: List[PublishSkuRowRequest] = Field(default_factory=list, max_length=200)
+    quantity: int = Field(1, ge=1, le=999999)
     delivery_method: str = Field("express", pattern=r"^(express|pickup)$")
+    shipping_method: str = Field("free", pattern="^(free|distance|fixed|template|none)$")
+    support_pickup: bool = False
     postage: float = Field(0, ge=0)
     address: Optional[str] = Field(None, max_length=200)
+    address_expected_text: Optional[str] = Field(None, max_length=200)
     brand: Optional[str] = Field(None, max_length=100)
     condition: str = Field("全新", max_length=20)
     remark: Optional[str] = Field(None, max_length=500)
@@ -255,6 +273,60 @@ class CategoryRecommendRequest(BaseModel):
     cat_id: str = Field("", max_length=80, description="当前已选闲鱼末级分类ID")
     cat_name: str = Field("", max_length=200, description="当前已选分类名称")
     channel_cat_id: str = Field("", max_length=80, description="当前已选频道分类ID")
+
+
+class AccountPublishCapabilityRequest(BaseModel):
+    """检测指定账号的批量发布能力。"""
+
+    account_id: str = Field(..., min_length=1, max_length=80)
+
+
+@router.post("/publish/capability", response_model=ApiResponse)
+async def get_publish_capability(
+    req: AccountPublishCapabilityRequest,
+    current_user: User = Depends(get_current_active_user),
+    session: AsyncSession = Depends(get_db_session),
+) -> Dict[str, Any]:
+    """按批量发布的同一规则检测账号类型和可用参数。"""
+    account_service = AccountService(session)
+    owner_scope = None if _is_admin(current_user) else current_user.id
+    account = await account_service.get_account_for_user(
+        owner_scope,
+        req.account_id.strip(),
+    )
+    if not account:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="账号不存在或无权使用")
+    if not (account.cookie or "").strip():
+        return ApiResponse(success=False, message="账号缺少Cookie，请重新登录账号")
+
+    capability = await detect_publish_account_capability(
+        cookie=account.cookie,
+        account_id=account.account_id,
+        owner_id=account.owner_id,
+    )
+    latest_cookie = capability.get("cookies_str")
+    if latest_cookie and latest_cookie != account.cookie:
+        account.cookie = latest_cookie
+        await session.commit()
+    if not capability.get("success"):
+        return ApiResponse(success=False, message=capability.get("message") or "账号发布能力检测失败")
+
+    is_fish_shop = bool(capability.get("is_fish_shop"))
+    return ApiResponse(
+        success=True,
+        message="账号发布能力检测成功",
+        data={
+            "account_id": account.account_id,
+            "account_type": "fish-shop" if is_fish_shop else "personal",
+            "supports": {
+                "quantity": is_fish_shop,
+                "specifications": is_fish_shop,
+                "sku_rows": is_fish_shop,
+                "shipping_methods": ["free", "none"] if is_fish_shop else ["free", "distance", "fixed", "none"],
+            },
+            "commission_config": capability.get("commission_config") or {},
+        },
+    )
 
 
 @router.post("/category/recommend", response_model=ApiResponse)

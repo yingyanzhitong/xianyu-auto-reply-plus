@@ -7,7 +7,6 @@
 """
 from __future__ import annotations
 
-import re
 from typing import Any, Dict, List, Optional
 
 from sqlalchemy import desc, func, select
@@ -19,19 +18,6 @@ from common.models.product_material import ProductMaterial
 # ==================== 素材库服务 ====================
 
 from common.utils.time_utils import safe_isoformat
-
-
-def _comparable_material_titles(title: str) -> List[str]:
-    """返回用于同名判断的标题，兼容 Gamer520 自动添加的“秒发”前缀。"""
-    normalized = re.sub(r"\s+", " ", str(title or "")).strip()
-    without_prefix = re.sub(r"^【秒发】\s*", "", normalized).strip()
-    return list(
-        dict.fromkeys(
-            value
-            for value in (normalized, without_prefix)
-            if value
-        )
-    )
 
 
 class MaterialSpecificationError(ValueError):
@@ -105,6 +91,42 @@ def _normalize_material_json(data: dict) -> dict:
     return normalized
 
 
+def _apply_external_material_fields(material: ProductMaterial, item: dict) -> None:
+    """将外部素材字段完整映射到批量发布实际读取的素材模型。"""
+    data = _normalize_material_json(item)
+    material.title = data["title"]
+    material.description = data["description"]
+    material.price = float(data["price"])
+    material.original_price = (
+        float(data["original_price"]) if data.get("original_price") else None
+    )
+    material.category = data.get("category")
+    material.platform_category_id = data.get("platform_category_id")
+    material.platform_category_name = data.get("platform_category_name")
+    material.platform_channel_category_id = data.get("platform_channel_category_id")
+    material.platform_channel_category_name = data.get("platform_channel_category_name")
+    material.platform_leaf_id = data.get("platform_leaf_id")
+    material.platform_tb_category_id = data.get("platform_tb_category_id")
+    material.platform_category_path = data["platform_category_path"]
+    material.platform_attributes = data["platform_attributes"]
+    material.category_source = data.get("category_source") or "manual"
+    material.category_confidence = data.get("category_confidence")
+    material.images = data["images"]
+    material.videos = data["videos"]
+    material.specifications = data["specifications"]
+    material.sku_rows = data["sku_rows"]
+    material.quantity = int(data.get("quantity") or 1)
+    material.delivery_method = data.get("delivery_method", "express")
+    material.shipping_method = data.get("shipping_method", "free")
+    material.support_pickup = bool(data.get("support_pickup", False))
+    material.postage = float(data.get("postage", 0))
+    material.address = data.get("address")
+    material.address_expected_text = data.get("address_expected_text")
+    material.brand = data.get("brand")
+    material.condition = data.get("condition", "全新")
+    material.remark = data.get("remark")
+
+
 class ProductMaterialService:
     """商品素材库 CRUD 服务"""
 
@@ -169,65 +191,20 @@ class ProductMaterialService:
             material = (await self.session.execute(stmt)).scalar_one_or_none()
 
             if material is None:
-                comparable_titles = _comparable_material_titles(item["title"])
-                duplicate_stmt = (
-                    select(ProductMaterial)
-                    .where(
-                        ProductMaterial.user_id == user_id,
-                        func.trim(ProductMaterial.title).in_(comparable_titles),
-                    )
-                    .order_by(ProductMaterial.id.asc())
-                )
-                duplicate = (
-                    await self.session.execute(duplicate_stmt)
-                ).scalars().first()
-                if duplicate is not None:
-                    results.append(
-                        {
-                            "external_id": external_id,
-                            "material_id": duplicate.id,
-                            "action": "skipped",
-                            "content_hash": duplicate.source_content_hash,
-                            "reason": "素材库已存在同名商品",
-                        }
-                    )
-                    continue
-
                 material = ProductMaterial(
                     user_id=user_id,
-                    title=item["title"],
-                    description=item["description"],
-                    price=float(item["price"]),
-                    original_price=None,
-                    category=item.get("category"),
-                    images=item.get("images", []),
-                    delivery_method=item.get("delivery_method", "express"),
-                    postage=float(item.get("postage", 0)),
-                    address=item.get("address"),
-                    brand=item.get("brand"),
-                    condition=item.get("condition", "全新"),
-                    remark=item.get("remark"),
                     source_type=source_type,
                     source_item_id=external_id,
                     source_content_hash=item["content_hash"],
                 )
+                _apply_external_material_fields(material, item)
                 self.session.add(material)
                 await self.session.flush()
                 action = "created"
             elif material.source_content_hash == item["content_hash"]:
                 action = "unchanged"
             else:
-                material.title = item["title"]
-                material.description = item["description"]
-                material.price = float(item["price"])
-                material.category = item.get("category")
-                material.images = item.get("images", [])
-                material.delivery_method = item.get("delivery_method", "express")
-                material.postage = float(item.get("postage", 0))
-                material.address = item.get("address")
-                material.brand = item.get("brand")
-                material.condition = item.get("condition", "全新")
-                material.remark = item.get("remark")
+                _apply_external_material_fields(material, item)
                 material.source_content_hash = item["content_hash"]
                 action = "updated"
 

@@ -18,7 +18,6 @@ from app.api.routes.product_publish import (
 )
 from app.services.product_publish_service import (
     ProductMaterialService,
-    _comparable_material_titles,
 )
 from app.services.account_service import AccountService
 from common.models.user import UserStatus
@@ -85,6 +84,12 @@ class SequenceSession:
 
     async def commit(self):
         self.commits += 1
+
+    def add(self, value):
+        value.id = 99
+
+    async def flush(self):
+        return None
 
 
 class CapturingResult:
@@ -277,11 +282,31 @@ class ExternalRequestValidationTests(unittest.TestCase):
         )
         self.assertIsNone(legacy.request_id)
 
-    def test_second_delivery_prefix_does_not_change_product_name(self):
-        self.assertEqual(
-            _comparable_material_titles("【秒发】  测试游戏 "),
-            ["【秒发】 测试游戏", "测试游戏"],
+    def test_external_material_accepts_full_batch_publish_fields(self):
+        item = external_item(1)
+        item.update(
+            {
+                "original_price": 9.9,
+                "platform_category_id": "500000",
+                "platform_channel_category_id": "500001",
+                "platform_tb_category_id": "500002",
+                "platform_category_path": [{"id": "500001", "name": "虚拟服务"}],
+                "category_source": "recommendation",
+                "quantity": 20,
+                "shipping_method": "none",
+                "address_expected_text": "上海",
+                "support_pickup": False,
+                "specifications": [
+                    {"name": "版本", "values": [{"name": "标准版"}]}
+                ],
+                "sku_rows": [
+                    {"specs": {"版本": "标准版"}, "price": 1, "stock": 20}
+                ],
+            }
         )
+        request = ExternalMaterialUpsertRequest(source="gamer520", items=[item])
+        self.assertEqual(request.items[0].quantity, 20)
+        self.assertEqual(request.items[0].sku_rows[0].stock, 20)
 
     def test_card_binding_accepts_item_title(self):
         request = BatchBindRequest(
@@ -379,13 +404,9 @@ class CardRelationItemTitleTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(cards[0]["item_title"], "【秒发】黄昏远征军")
 
 
-class ExternalMaterialDeduplicationTests(unittest.IsolatedAsyncioTestCase):
-    async def test_existing_same_name_material_is_skipped(self):
-        duplicate = SimpleNamespace(
-            id=88,
-            source_content_hash="existing-hash",
-        )
-        session = SequenceSession([None, duplicate])
+class ExternalMaterialIdentityTests(unittest.IsolatedAsyncioTestCase):
+    async def test_new_external_identity_creates_material_even_when_title_matches(self):
+        session = SequenceSession([None])
         service = ProductMaterialService(session)
 
         results = await service.upsert_external(
@@ -394,9 +415,8 @@ class ExternalMaterialDeduplicationTests(unittest.IsolatedAsyncioTestCase):
             items=[external_item(1)],
         )
 
-        self.assertEqual(results[0]["action"], "skipped")
-        self.assertEqual(results[0]["material_id"], 88)
-        self.assertIn("同名", results[0]["reason"])
+        self.assertEqual(results[0]["action"], "created")
+        self.assertEqual(results[0]["material_id"], 99)
         self.assertEqual(session.commits, 1)
 
 
