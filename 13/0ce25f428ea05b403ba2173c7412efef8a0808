@@ -1,0 +1,25 @@
+CHANGELOG.md
+  h_b656a29e43e196 3-8
+backend-web/app/api/routes/product_publish.py
+  h_b656a29e43e196 31,213,216-228,230-231,234,276-329
+backend-web/app/services/product_publish_service.py
+  h_b656a29e43e196 94-129,200,207
+backend-web/tests/test_gamer520_external_api.py
+  h_b656a29e43e196 88-92,94,285-309,407-409,418-419
+package-lock.json
+  h_b656a29e43e196 3,9
+package.json
+  h_b656a29e43e196 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "130ce25f428ea05b403ba2173c7412efef8a0808",
+  "prompts": {},
+  "logical_commit_id": "130ce25f428ea05b403ba2173c7412efef8a0808",
+  "humans": {
+    "h_b656a29e43e196": {
+      "author": "masongzhi <masongzhi@bigo.sg>"
+    }
+  }
+}
