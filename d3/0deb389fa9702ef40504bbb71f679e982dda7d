@@ -1,0 +1,28 @@
+CHANGELOG.md
+  s_8f073b6af74ab1::t_542092af7cc8d3 3-9
+frontend/package-lock.json
+  s_8f073b6af74ab1::t_cac9a38a03b18e 3,9
+frontend/package.json
+  s_8f073b6af74ab1::t_44617347c12e71 4
+package-lock.json
+  s_8f073b6af74ab1::t_4f0af90b2d8a1f 3,9
+package.json
+  s_8f073b6af74ab1::t_7f606192a8b5ab 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "d30deb389fa9702ef40504bbb71f679e982dda7d",
+  "prompts": {},
+  "logical_commit_id": "d30deb389fa9702ef40504bbb71f679e982dda7d",
+  "sessions": {
+    "s_8f073b6af74ab1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0425c-a251-7850-b306-1606ce87baa2",
+        "model": "unknown"
+      },
+      "human_author": "masongzhi <masongzhi@bigo.sg>"
+    }
+  }
+}
