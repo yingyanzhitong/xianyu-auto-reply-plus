@@ -1,0 +1,46 @@
+CHANGELOG.md
+  s_8f073b6af74ab1::t_619a6afaef0eab 3-8
+backend-web/app/api/routes/admin.py
+  s_8f073b6af74ab1::t_975e084f3d5127 41,898-899,924-925,962-975,1008-1009
+common/db/init_database.py
+  s_8f073b6af74ab1::t_7b7c7d7c03c53c 1172-1173,1889-1892
+common/models/scheduled_task.py
+  s_8f073b6af74ab1::t_d77117688646af 26-27
+common/scheduled_task_time.py
+  s_8f073b6af74ab1::t_28eeffd7b6bf10 1-34
+common/tests/test_polish_schedule_window.py
+  s_8f073b6af74ab1::t_b4ac63f415aa30 1-26
+frontend/package-lock.json
+  s_8f073b6af74ab1::t_6d3d6d0636c783 3,9
+frontend/package.json
+  s_8f073b6af74ab1::t_7b0f2a584a3844 4
+frontend/src/api/scheduledTasks.ts
+  s_8f073b6af74ab1::t_c02ae429883520 20-21,39-40,72-77
+frontend/src/pages/admin/ScheduledTasks.tsx
+  s_8f073b6af74ab1::t_4257c9c4b2c4f8 7,26-28,99-134,169,199,208,263-315
+package-lock.json
+  s_8f073b6af74ab1::t_0f04cae25d3e35 3,9
+package.json
+  s_8f073b6af74ab1::t_90a6c440cb1ab1 3
+scheduler/app/services/scheduled_task_service.py
+  s_8f073b6af74ab1::t_b94b624311b218 19,49-54,115-119,160-161,170-171,189-198,209,213-218
+scheduler/app/services/scheduler_service.py
+  s_8f073b6af74ab1::t_85680d8867c4ee 66-67,581-586,591,608-622
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "300c3e03ef2993639143adce637a66c2f1e70628",
+  "prompts": {},
+  "logical_commit_id": "300c3e03ef2993639143adce637a66c2f1e70628",
+  "sessions": {
+    "s_8f073b6af74ab1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0425c-a251-7850-b306-1606ce87baa2",
+        "model": "unknown"
+      },
+      "human_author": "masongzhi <masongzhi@bigo.sg>"
+    }
+  }
+}
