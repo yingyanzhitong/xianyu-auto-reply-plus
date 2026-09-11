@@ -606,6 +606,7 @@ class RedeliveryTask:
                 # 买家下 N 件时一次性补发 N 张卡密
                 deliver_url = f"{settings.websocket_service_url}/internal/orders/deliver"
                 deliver_data = {
+                    "account_id": account_id,
                     "order_no": order_no,
                     "item_id": order.item_id,
                     "buyer_id": order.buyer_id,
