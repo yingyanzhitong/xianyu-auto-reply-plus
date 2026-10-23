@@ -1,0 +1,54 @@
+common/utils/notification_context.py
+  s_89c4f5e87fe944::t_7a8a2b882b33e7 1-20
+common/tests/test_notification_template.py
+  s_89c4f5e87fe944::t_fd56dc2afe01be 4,11-32
+common/tests/test_daily_summary.py
+  s_89c4f5e87fe944::t_fd56dc2afe01be 1-162
+common/services/daily_summary_service.py
+  s_89c4f5e87fe944::t_5d3c50bf78b969 1-44,46-152
+  s_89c4f5e87fe944::t_d93c8b7afe2aa7 45
+scheduler/app/services/scheduler_service.py
+  s_89c4f5e87fe944::t_d93c8b7afe2aa7 66,99-100,184,194-196,512-525
+websocket/app/services/xianyu/notification_manager.py
+  s_89c4f5e87fe944::t_63628dd95b6c22 30-31,127-128,137,162,228-230,240,260,463-464
+common/utils/notification_utils.py
+  s_89c4f5e87fe944::t_5d3c50bf78b969 40-61
+websocket/app/services/xianyu/auto_reply_service.py
+  s_89c4f5e87fe944::t_63628dd95b6c22 36-37,1075-1076,1089,1104,1133-1134
+frontend/src/pages/notifications/NotificationChannels.tsx
+  s_89c4f5e87fe944::t_ddf9f983d0baff 109,115,117-124,137,149,167-179,195,207,220-230,237,243,250,260,263-267,278,296,400,412,421,454,684,689-714,716
+package.json
+  s_89c4f5e87fe944::t_d60d864acb0177 3
+CHANGELOG.md
+  s_89c4f5e87fe944::t_d60d864acb0177 3
+  s_89c4f5e87fe944::t_67270821d48f93 4-9
+common/tests/test_notification_dispatch.py
+  s_89c4f5e87fe944::t_fd56dc2afe01be 15-50,93,116
+frontend/package.json
+  s_89c4f5e87fe944::t_d60d864acb0177 4
+common/utils/notification_template.py
+  s_89c4f5e87fe944::t_7a8a2b882b33e7 15,30-31,43-44,64-68,70-77,119-120
+frontend/package-lock.json
+  s_89c4f5e87fe944::t_ecefdcc2f1f40e 3,9
+package-lock.json
+  s_89c4f5e87fe944::t_6e8c3bcdfa5502 3,9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "585f5e7c7c14256daa715ec54aa3b5014ef5c86f",
+  "prompts": {},
+  "logical_commit_id": "585f5e7c7c14256daa715ec54aa3b5014ef5c86f",
+  "sessions": {
+    "s_89c4f5e87fe944": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a16791-765d-7f50-90e9-824d100f05b0",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "masongzhi <masongzhi@bigo.sg>",
+      "total_additions": 568,
+      "total_deletions": 17
+    }
+  }
+}
