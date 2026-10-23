@@ -1,0 +1,38 @@
+.github/workflows/build-deploy.yml
+  s_89c4f5e87fe944::t_11ff1803dc483f 86-87
+package.json
+  s_89c4f5e87fe944::t_11ff1803dc483f 3
+scheduler/Dockerfile
+  s_89c4f5e87fe944::t_11ff1803dc483f 9-12,21-22,33-37
+websocket/Dockerfile
+  s_89c4f5e87fe944::t_11ff1803dc483f 9-12,21-22,34-38
+frontend/package.json
+  s_89c4f5e87fe944::t_11ff1803dc483f 4
+backend-web/Dockerfile
+  s_89c4f5e87fe944::t_11ff1803dc483f 9-12,22-23,34-38
+CHANGELOG.md
+  s_89c4f5e87fe944::t_11ff1803dc483f 3-8
+frontend/package-lock.json
+  s_89c4f5e87fe944::t_beb742fc0a9f1c 3,9
+package-lock.json
+  s_89c4f5e87fe944::t_cc0f93018fef1d 3,9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "9cca83191e15f50623758f798cdeaf736dcb4801",
+  "prompts": {},
+  "logical_commit_id": "9cca83191e15f50623758f798cdeaf736dcb4801",
+  "sessions": {
+    "s_89c4f5e87fe944": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a16791-765d-7f50-90e9-824d100f05b0",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "masongzhi <masongzhi@bigo.sg>",
+      "total_additions": 43,
+      "total_deletions": 23
+    }
+  }
+}
