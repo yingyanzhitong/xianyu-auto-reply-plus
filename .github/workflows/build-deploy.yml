@@ -83,6 +83,8 @@ jobs:
           context: .
           file: ${{ matrix.dockerfile }}
           platforms: linux/amd64
+          build-args: |
+            DEBIAN_MIRROR=deb.debian.org
           push: true
           tags: |
             ghcr.io/${{ github.repository_owner }}/xianyu-${{ matrix.component }}:${{ needs.version.outputs.image_tag }}

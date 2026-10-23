@@ -6,9 +6,10 @@ FROM python:3.11-slim
 
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 
-# 配置国内镜像源
-RUN sed -i 's|deb.debian.org|mirrors.aliyun.com|g' /etc/apt/sources.list.d/debian.sources 2>/dev/null || \
-    sed -i 's|deb.debian.org|mirrors.aliyun.com|g' /etc/apt/sources.list 2>/dev/null || true
+# 本地构建默认使用国内源；海外 CI 可通过构建参数使用 Debian 官方源。
+ARG DEBIAN_MIRROR=mirrors.aliyun.com
+RUN sed -i "s|deb.debian.org|${DEBIAN_MIRROR}|g" /etc/apt/sources.list.d/debian.sources 2>/dev/null || \
+    sed -i "s|deb.debian.org|${DEBIAN_MIRROR}|g" /etc/apt/sources.list 2>/dev/null || true
 RUN pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
 
 WORKDIR /app
@@ -18,10 +19,8 @@ RUN apt-get update && apt-get install -y curl ca-certificates gcc \
     && update-ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# 复制项目源码
-COPY common /app/common
-COPY backend-web /app/backend-web
-COPY launcher /app/launcher
+# 依赖层只由依赖声明决定，修改业务源码时复用已安装的依赖和浏览器。
+COPY backend-web/pyproject.toml /app/backend-web/pyproject.toml
 
 # 从pyproject.toml提取并安装依赖
 RUN python -c "\
@@ -32,6 +31,11 @@ open('/tmp/requirements.txt','w').write('\n'.join(deps))" && \
 
 RUN python -m playwright install --with-deps chromium
 RUN python -m patchright install --with-deps chromium
+
+# 复制项目源码
+COPY common /app/common
+COPY backend-web /app/backend-web
+COPY launcher /app/launcher
 
 # 创建日志目录
 RUN mkdir -p /app/backend-web/logs /app/static/uploads
