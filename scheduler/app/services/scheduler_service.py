@@ -63,6 +63,7 @@ from app.services.scheduled_task_service import (
     TASK_CODE_AUTO_ORDER,
 )
 from common.db.session import async_session_maker
+from common.services.daily_summary_service import DailySummaryService
 from common.scheduled_task_time import is_within_daily_time_range
 from common.utils.time_utils import get_beijing_now_naive
 
@@ -95,6 +96,8 @@ class SchedulerService:
         self._seller_fill_task_handle: Optional[asyncio.Task] = None
         self._dm_send_task_handle: Optional[asyncio.Task] = None
         self._auto_order_task_handle: Optional[asyncio.Task] = None
+        self._daily_summary_task_handle: Optional[asyncio.Task] = None
+        self._daily_summary_task = DailySummaryService()
         self._redelivery_task = RedeliveryTask()
         self._rate_task = RateTask()
         self._polish_task = polish_task_service
@@ -178,6 +181,7 @@ class SchedulerService:
         self._seller_fill_task_handle = asyncio.create_task(self._run_seller_fill_loop())
         self._dm_send_task_handle = asyncio.create_task(self._run_dm_send_loop())
         self._auto_order_task_handle = asyncio.create_task(self._run_auto_order_loop())
+        self._daily_summary_task_handle = asyncio.create_task(self._run_daily_summary_loop())
         logger.info("[定时任务调度] 已启动")
     
     def stop(self) -> None:
@@ -187,6 +191,9 @@ class SchedulerService:
             return
         
         self._running = False
+        if self._daily_summary_task_handle:
+            self._daily_summary_task_handle.cancel()
+            self._daily_summary_task_handle = None
         if self._redelivery_task_handle:
             self._redelivery_task_handle.cancel()
             self._redelivery_task_handle = None
@@ -502,6 +509,20 @@ class SchedulerService:
         else:
             logger.warning(f"[定时任务调度] 未知的任务代码: {task_code}")
     
+    async def _run_daily_summary_loop(self) -> None:
+        """每分钟检查北京时间 10 点的每日总结，配置随渠道保存即时生效。"""
+        while self._running:
+            try:
+                await self._daily_summary_task.execute()
+            except asyncio.CancelledError:
+                break
+            except Exception as exc:
+                logger.exception("[每日总结] 执行失败: {}", exc)
+            try:
+                await asyncio.sleep(60)
+            except asyncio.CancelledError:
+                break
+
     async def _run_redelivery_loop(self) -> None:
         """补发货任务执行循环"""
         logger.info("[定时任务调度] 补发货任务循环开始")

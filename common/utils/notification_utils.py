@@ -37,6 +37,28 @@ def parse_notification_config(config) -> Dict[str, Any]:
         return {"config": config}
 
 
+async def send_channel_notification(channel_type: str, config_data: dict, message: str) -> bool:
+    """按渠道类型发送正文，保留发送结果供定时任务重试判断。"""
+    senders = {
+        "ding_talk": send_dingtalk_notification,
+        "dingtalk": send_dingtalk_notification,
+        "feishu": send_feishu_notification,
+        "lark": send_feishu_notification,
+        "bark": send_bark_notification,
+        "email": send_email_notification,
+        "webhook": send_webhook_notification,
+        "wechat": send_wechat_notification,
+        "wechat_work": send_wechat_notification,
+        "telegram": send_telegram_notification,
+        "pushplus": send_pushplus_notification,
+    }
+    sender = senders.get(channel_type)
+    if not sender:
+        logger.warning("不支持的通知渠道类型: {}", channel_type)
+        return False
+    return await sender(config_data, message)
+
+
 async def send_dingtalk_notification(config_data: Dict[str, Any], message: str) -> bool:
     """发送钉钉通知
     

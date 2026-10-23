@@ -33,7 +33,8 @@ from common.models.auto_reply_message_log import XYAutoReplyMessageLog
 from common.db.session import async_session_maker
 from common.db.redis_client import distributed_lock
 from common.utils.default_reply_api import call_reply_api
-from common.utils.notification_template import render_notification_template
+from common.utils.notification_context import get_notification_item_name
+from common.utils.notification_template import is_notification_type_enabled, render_notification_template
 
 from app.services.xianyu.resource_manager import pause_manager
 from app.services.xianyu.auto_reply_log_service import AutoReplyLogService
@@ -1071,6 +1072,8 @@ class AutoReplyService:
             except Exception as e:
                 logger.warning(f"获取账号详情失败: {e}")
 
+            item_name = await get_notification_item_name(self.cookie_id, item_id)
+
             # 构建通知内容
             account_desc = f"{self.cookie_id}({remark})" if remark else self.cookie_id
             notification_content = f"【闲鱼消息】\n"
@@ -1083,6 +1086,7 @@ class AutoReplyService:
             notification_content += f"自动回复: {reply}\n"
             notification_content += f"AI回复: {ai_reply}\n"
             notification_content += f"AI回复状态: {ai_reply_status}\n"
+            notification_content += f"商品名称: {item_name}\n"
             notification_content += f"商品ID: {item_id or '未知'}\n"
             notification_content += f"聊天ID: {chat_id or '未知'}\n"
             notification_content += f"时间: {msg_time}"
@@ -1097,6 +1101,7 @@ class AutoReplyService:
                 "ai_reply": ai_reply or "",
                 "ai_reply_status": ai_reply_status or "",
                 "item_id": item_id or "未知",
+                "item_name": item_name,
                 "chat_id": chat_id or "未知",
                 "time": msg_time or time.strftime('%Y-%m-%d %H:%M:%S'),
             }
@@ -1125,6 +1130,8 @@ class AutoReplyService:
                     )
                     
                     config_data = parse_notification_config(channel_config)
+                    if not is_notification_type_enabled(config_data, "chat"):
+                        continue
                     channel_message = render_notification_template(
                         config_data,
                         "chat",

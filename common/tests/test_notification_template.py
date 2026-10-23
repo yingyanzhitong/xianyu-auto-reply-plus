@@ -1,12 +1,35 @@
 import unittest
 
 from common.utils.notification_template import (
+    is_notification_type_enabled,
     render_notification_template,
     validate_notification_template,
 )
 
 
 class NotificationTemplateTest(unittest.TestCase):
+    def test_item_name_supports_english_and_chinese_placeholders(self):
+        for template_type in ("chat", "delivery"):
+            self.assertIsNone(validate_notification_template("{{商品名称}} / {{item_name}}", template_type))
+            self.assertEqual(render_notification_template(
+                {f"{template_type}_template": "{{商品名称}} / {{item_name}}"},
+                template_type, {"item_name": "测试商品"}, "默认",
+            ), "测试商品 / 测试商品")
+        self.assertIsNotNone(validate_notification_template("{{商品名称}}", "account"))
+
+    def test_type_switches_preserve_legacy_defaults_and_require_daily_opt_in(self):
+        for template_type in ("chat", "delivery", "account"):
+            self.assertTrue(is_notification_type_enabled({}, template_type))
+            self.assertFalse(is_notification_type_enabled({f"{template_type}_enabled": False}, template_type))
+        self.assertFalse(is_notification_type_enabled({}, "daily_summary"))
+        self.assertTrue(is_notification_type_enabled({"daily_summary_enabled": True}, "daily_summary"))
+
+    def test_daily_summary_template_keeps_zero_values(self):
+        self.assertEqual(render_notification_template(
+            {"daily_summary_template": "{{date}}|{{order_count}}|{{income}}|{{chat_count}}"},
+            "daily_summary", {"date": "2026-10-22", "order_count": 0, "income": "0.00", "chat_count": 0}, "默认",
+        ), "2026-10-22|0|0.00|0")
+
     def test_renders_multiline_template_and_repeated_variables(self):
         message = render_notification_template(
             {"delivery_template": "买家: {{buyer_nick}}\n订单: {{order_id}}\n再次确认: {{buyer_nick}}"},

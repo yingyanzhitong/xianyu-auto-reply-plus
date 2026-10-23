@@ -27,7 +27,8 @@ from common.utils.notification_utils import (
 )
 from common.services.token_api_mode import TOKEN_API_NAMES
 from common.utils.text_utils import safe_str
-from common.utils.notification_template import render_notification_template
+from common.utils.notification_context import get_notification_item_name
+from common.utils.notification_template import is_notification_type_enabled, render_notification_template
 
 
 class NotificationManager:
@@ -123,6 +124,8 @@ class NotificationManager:
             except Exception as e:
                 logger.warning(f"获取账号详情失败: {e}")
 
+            item_name = await get_notification_item_name(self.cookie_id, item_id)
+
             # 构建通知内容（与旧框架保持一致）
             account_desc = f"{self.cookie_id}({remark})" if remark else self.cookie_id
             notification_msg = f"🚨 接收消息通知\n\n" \
@@ -131,6 +134,7 @@ class NotificationManager:
                              f"账号备注: {remark or '未知'}\n" \
                              f"买家: {send_user_name} (ID: {send_user_id})\n" \
                              f"买家ID: {send_user_id or '未知'}\n" \
+                             f"商品名称: {item_name}\n" \
                              f"商品ID: {item_id or '未知'}\n" \
                              f"聊天ID: {chat_id or '未知'}\n" \
                              f"消息内容: {send_message}\n" \
@@ -155,6 +159,7 @@ class NotificationManager:
                     "ai_reply": ai_reply or "",
                     "ai_reply_status": ai_reply_status or "",
                     "item_id": item_id or "未知",
+                    "item_name": item_name,
                     "chat_id": chat_id or "未知",
                     "time": time.strftime('%Y-%m-%d %H:%M:%S'),
                 },
@@ -221,6 +226,8 @@ class NotificationManager:
                 except Exception as e:
                     logger.warning(f"读取订单 {order_id} 的通知信息失败: {self._safe_str(e)}")
 
+            item_name = await get_notification_item_name(self.cookie_id, item_id)
+
             # 构建通知内容
             account_desc = f"{self.cookie_id}({remark})" if remark else self.cookie_id
             notification_message = f"🚨 自动发货通知\n\n" \
@@ -230,6 +237,7 @@ class NotificationManager:
                                  f"订单金额: {amount}\n" \
                                  f"购买数量: {quantity}\n" \
                                  f"订单ID: {order_id or '未知'}\n" \
+                                 f"商品名称: {item_name}\n" \
                                  f"商品ID: {item_id or '未知'}\n" \
                                  f"聊天ID: {chat_id or '未知'}\n" \
                                  f"结果: {error_message}\n" \
@@ -249,6 +257,7 @@ class NotificationManager:
                     "buyer_id": send_user_id or "未知",
                     "message": "",
                     "item_id": item_id or "未知",
+                    "item_name": item_name,
                     "chat_id": chat_id or "未知",
                     "time": time.strftime('%Y-%m-%d %H:%M:%S'),
                     "order_id": order_id or "未知",
@@ -451,6 +460,8 @@ class NotificationManager:
 
             try:
                 config_data = parse_notification_config(channel_config)
+                if template_type and not is_notification_type_enabled(config_data, template_type):
+                    continue
                 logger.info(f"📱 解析后配置: {config_data}")
                 channel_message = render_notification_template(
                     config_data,

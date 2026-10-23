@@ -106,12 +106,20 @@ const channelTypes = [
 
 type ChannelType = typeof channelTypes[number]['type']
 
-type NotificationTemplateType = 'chat' | 'delivery' | 'account'
+type NotificationTemplateType = 'chat' | 'delivery' | 'account' | 'daily_summary'
 
 const templateConfigKeys: Record<NotificationTemplateType, string> = {
   chat: 'chat_template',
   delivery: 'delivery_template',
   account: 'account_template',
+  daily_summary: 'daily_summary_template',
+}
+
+const defaultNotificationEnabled: Record<NotificationTemplateType, boolean> = {
+  chat: true,
+  delivery: true,
+  account: true,
+  daily_summary: false,
 }
 
 const templateVariables: Record<NotificationTemplateType, Array<{ name: string; label: string }>> = {
@@ -126,6 +134,7 @@ const templateVariables: Record<NotificationTemplateType, Array<{ name: string; 
     { name: 'ai_reply', label: 'AI 回复内容' },
     { name: 'ai_reply_status', label: 'AI 回复状态' },
     { name: 'item_id', label: '商品 ID' },
+    { name: 'item_name', label: '商品名称，也支持 {{商品名称}}' },
     { name: 'chat_id', label: '聊天 ID' },
     { name: 'time', label: '通知时间' },
   ],
@@ -137,6 +146,7 @@ const templateVariables: Record<NotificationTemplateType, Array<{ name: string; 
     { name: 'buyer_id', label: '买家 ID' },
     { name: 'message', label: '消息内容' },
     { name: 'item_id', label: '商品 ID' },
+    { name: 'item_name', label: '商品名称，也支持 {{商品名称}}' },
     { name: 'chat_id', label: '聊天 ID' },
     { name: 'time', label: '通知时间' },
     { name: 'order_id', label: '订单 ID' },
@@ -156,6 +166,19 @@ const templateVariables: Record<NotificationTemplateType, Array<{ name: string; 
     { name: 'verification_info', label: '验证信息' },
     { name: 'time', label: '通知时间' },
   ],
+  daily_summary: [
+    { name: 'date', label: '统计日期' },
+    { name: 'accounts', label: '统计账号' },
+    { name: 'account_count', label: '账号数量' },
+    { name: 'order_count', label: '有效订单数' },
+    { name: 'income', label: '收入（元）' },
+    { name: 'chat_count', label: '聊天会话数' },
+    { name: 'message_count', label: '收到消息数' },
+    { name: 'reply_count', label: '自动回复数' },
+    { name: 'shipped_count', label: '已发货订单数' },
+    { name: 'pending_count', label: '待发货订单数' },
+    { name: 'time', label: '通知时间' },
+  ],
 }
 
 const defaultTemplates: Record<NotificationTemplateType, string> = {
@@ -169,6 +192,7 @@ const defaultTemplates: Record<NotificationTemplateType, string> = {
 自动回复: {{reply}}
 AI 回复: {{ai_reply}}
 AI 回复状态: {{ai_reply_status}}
+商品名称: {{item_name}}
 商品ID: {{item_id}}
 聊天ID: {{chat_id}}
 时间: {{time}}`,
@@ -180,6 +204,7 @@ AI 回复状态: {{ai_reply_status}}
 订单金额: {{amount}}
 购买数量: {{quantity}}
 订单ID: {{order_id}}
+商品名称: {{item_name}}
 商品ID: {{item_id}}
 聊天ID: {{chat_id}}
 结果: {{result}}
@@ -192,25 +217,37 @@ AI 回复状态: {{ai_reply_status}}
 时间: {{time}}
 详情: {{detail}}
 {{verification_info}}`,
+  daily_summary: `📊 闲鱼每日总结（{{date}}）
+
+统计账号: {{accounts}}
+有效订单: {{order_count}} 单
+收入: ¥{{income}}
+聊天会话: {{chat_count}} 个
+收到消息: {{message_count}} 条
+自动回复: {{reply_count}} 条
+已发货: {{shipped_count}} 单
+待发货: {{pending_count}} 单
+时间: {{time}}`,
 }
 
 const templateDefinitions: Array<{ type: NotificationTemplateType; label: string }> = [
   { type: 'chat', label: '聊天消息模板' },
   { type: 'delivery', label: '自动发货模板' },
   { type: 'account', label: '账号状态模板' },
+  { type: 'daily_summary', label: '每日总结模板' },
 ]
 
 const getTemplateValidationError = (template: string, templateType: NotificationTemplateType): string | null => {
   if (!template.trim()) return null
 
-  const placeholderPattern = /{{\s*([A-Za-z_][A-Za-z0-9_]*)\s*}}/g
+  const placeholderPattern = /{{\s*([A-Za-z_][A-Za-z0-9_]*|商品名称)\s*}}/g
   const placeholders = [...template.matchAll(placeholderPattern)]
   const remaining = template.replace(placeholderPattern, '')
   if (remaining.includes('{{') || remaining.includes('}}')) {
     return '占位符必须使用 {{variable}} 格式'
   }
 
-  const unknownVariables = [...new Set(placeholders.map((match) => match[1]).filter((name) => !templateVariables[templateType].some((variable) => variable.name === name)))]
+  const unknownVariables = [...new Set(placeholders.map((match) => match[1] === '商品名称' ? 'item_name' : match[1]).filter((name) => !templateVariables[templateType].some((variable) => variable.name === name)))]
   if (unknownVariables.length > 0) {
     return `不支持的占位符: ${unknownVariables.join(', ')}`
   }
@@ -220,8 +257,14 @@ const getTemplateValidationError = (template: string, templateType: Notification
 const splitTemplateConfig = (config?: Record<string, unknown>) => {
   const templates: Record<NotificationTemplateType, string> = { ...defaultTemplates }
   const channelConfig: Record<string, unknown> = {}
+  const enabled = { ...defaultNotificationEnabled }
 
   for (const [key, value] of Object.entries(config || {})) {
+    const enabledType = templateDefinitions.find((definition) => `${definition.type}_enabled` === key)?.type
+    if (enabledType) {
+      enabled[enabledType] = value === true
+      continue
+    }
     const templateType = templateDefinitions.find((definition) => templateConfigKeys[definition.type] === key)?.type
     if (templateType) {
       if (typeof value === 'string' && value.trim()) {
@@ -232,7 +275,7 @@ const splitTemplateConfig = (config?: Record<string, unknown>) => {
     }
   }
 
-  return { templates, channelConfig }
+  return { templates, channelConfig, enabled }
 }
 
 const channelTypeLabels: Record<string, string> = Object.fromEntries(
@@ -250,6 +293,7 @@ export function NotificationChannels() {
   const [formName, setFormName] = useState('')
   const [formConfig, setFormConfig] = useState('')
   const [formTemplates, setFormTemplates] = useState<Record<NotificationTemplateType, string>>({ ...defaultTemplates })
+  const [formNotificationEnabled, setFormNotificationEnabled] = useState({ ...defaultNotificationEnabled })
   const [formEnabled, setFormEnabled] = useState(true)
   const [saving, setSaving] = useState(false)
 
@@ -353,6 +397,7 @@ export function NotificationChannels() {
       setFormConfig('')
     }
     setFormTemplates({ ...defaultTemplates })
+    setFormNotificationEnabled({ ...defaultNotificationEnabled })
     setFormEnabled(true)
     setIsModalOpen(true)
   }
@@ -364,7 +409,7 @@ export function NotificationChannels() {
     setEditingChannel(channel)
     setFormName(channel.name)
     // 编辑时如果配置为空，也填充默认样例
-    const { templates, channelConfig } = splitTemplateConfig(channel.config)
+    const { templates, channelConfig, enabled } = splitTemplateConfig(channel.config)
     if (Object.keys(channelConfig).length > 0) {
       setFormConfig(JSON.stringify(channelConfig, null, 2))
     } else if (typeConfig?.defaultConfig) {
@@ -373,6 +418,7 @@ export function NotificationChannels() {
       setFormConfig('')
     }
     setFormTemplates(templates)
+    setFormNotificationEnabled(enabled)
     setFormEnabled(channel.enabled)
     setIsModalOpen(true)
   }
@@ -405,6 +451,7 @@ export function NotificationChannels() {
       }
 
       for (const definition of templateDefinitions) {
+        config[`${definition.type}_enabled`] = formNotificationEnabled[definition.type]
         delete config[templateConfigKeys[definition.type]]
         const template = formTemplates[definition.type]
         const validationError = getTemplateValidationError(template, definition.type)
@@ -634,13 +681,39 @@ export function NotificationChannels() {
                   <div>
                     <p className="input-label">通知正文模板</p>
                     <p className="text-xs text-slate-500 dark:text-slate-400">
-                      支持英文占位符，例如 {'{{buyer_nick}}'}；留空可恢复系统默认正文。
+                      支持占位符，例如 {'{{buyer_nick}}'}、{'{{商品名称}}'}；留空可恢复系统默认正文。各类型可独立启用。
                     </p>
                   </div>
                   {templateDefinitions.map((definition) => (
                     <div key={definition.type}>
-                      <label className="input-label">{definition.label}</label>
+                      <div className="flex items-center gap-3 mb-1">
+                        <label htmlFor={`notification-template-${definition.type}`} className="text-sm font-medium text-slate-700 dark:text-slate-200">{definition.label}</label>
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-checked={formNotificationEnabled[definition.type]}
+                          aria-label={`启用${definition.label.replace('模板', '通知')}`}
+                          onClick={() => setFormNotificationEnabled((enabled) => ({
+                            ...enabled,
+                            [definition.type]: !enabled[definition.type],
+                          }))}
+                          className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
+                            formNotificationEnabled[definition.type] ? 'bg-blue-600' : 'bg-slate-300 dark:bg-slate-600'
+                          }`}
+                        >
+                          <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
+                            formNotificationEnabled[definition.type] ? 'translate-x-5' : 'translate-x-1'
+                          }`} />
+                        </button>
+                        <span className="text-xs text-slate-500 dark:text-slate-400">{formNotificationEnabled[definition.type] ? '已启用' : '已关闭'}</span>
+                      </div>
+                      {definition.type === 'daily_summary' && (
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
+                          每天北京时间 10:00，汇总此渠道已启用订阅账号前一天 00:00–24:00 的数据。订单按下单时间统计，收入为已付款且未退款订单金额；聊天数为买家会话数。
+                        </p>
+                      )}
                       <textarea
+                        id={`notification-template-${definition.type}`}
                         value={formTemplates[definition.type]}
                         onChange={(event) => setFormTemplates((templates) => ({
                           ...templates,

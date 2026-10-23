@@ -12,6 +12,42 @@ from app.services.xianyu.auto_reply_service import AutoReplyService  # noqa: E40
 
 
 class NotificationDispatchTest(unittest.IsolatedAsyncioTestCase):
+    def setUp(self):
+        # 通知回归测试只使用固定商品缓存，不访问真实数据库。
+        item_patch = patch("common.db.compat.db_manager.get_item_info", return_value={"item_title": "测试商品"})
+        self.item_lookup = item_patch.start()
+        self.addCleanup(item_patch.stop)
+
+    async def test_type_switch_only_suppresses_selected_type(self):
+        manager = NotificationManager("seller")
+        channels = [{"enabled": True, "channel_type": "bark", "channel_config": {"chat_enabled": False}}]
+        with patch("app.services.xianyu.notification_manager.send_bark_notification", new=AsyncMock(return_value=True)) as send:
+            await manager._send_to_channels(channels, "聊天", template_type="chat")
+            send.assert_not_awaited()
+            await manager._send_to_channels(channels, "发货", template_type="delivery")
+            send.assert_awaited_once()
+        for template_type in ("delivery", "account"):
+            channels[0]["channel_config"] = {f"{template_type}_enabled": False}
+            with patch("app.services.xianyu.notification_manager.send_bark_notification", new=AsyncMock()) as send:
+                await manager._send_to_channels(channels, "关闭通知", template_type=template_type)
+                send.assert_not_awaited()
+
+    async def test_auto_reply_honors_chat_switch_and_resolves_item_name(self):
+        service = object.__new__(AutoReplyService)
+        service.cookie_id = "seller"
+        config = {"chat_enabled": False, "chat_template": "{{商品名称}}|{{item_name}}"}
+        with patch("common.db.compat.db_manager.get_account_notifications", return_value=[
+            {"enabled": True, "channel_type": "bark", "channel_config": config}
+        ]), patch("common.db.compat.db_manager.get_cookie_details", return_value={}), patch(
+            "common.utils.notification_utils.send_bark_notification", new=AsyncMock(return_value=True)
+        ) as send:
+            await service._send_notification("买家", "buyer", "你好", "chat", "item", "时间")
+            send.assert_not_awaited()
+            config["chat_enabled"] = True
+            await service._send_notification("买家", "buyer", "你好", "chat", "item", "时间")
+            self.assertEqual(send.await_args.args[1], "测试商品|测试商品")
+        self.item_lookup.assert_called_with("seller", "item")
+
     async def test_channels_render_their_own_chat_templates(self):
         manager = NotificationManager("seller")
         notifications = [
@@ -54,7 +90,7 @@ class NotificationDispatchTest(unittest.IsolatedAsyncioTestCase):
                     "channel_type": "bark",
                     "channel_config": {
                         "device_key": "a",
-                        "delivery_template": "{{buyer_nick}}|{{amount}}|{{quantity}}|{{result}}",
+                        "delivery_template": "{{buyer_nick}}|{{amount}}|{{quantity}}|{{result}}|{{商品名称}}",
                     },
                 }
             ],
@@ -77,7 +113,7 @@ class NotificationDispatchTest(unittest.IsolatedAsyncioTestCase):
                 order_id="order-1",
             )
 
-        self.assertEqual(bark_send.await_args.args[1], "金鱼小姐21|¥2.00|1|发货成功")
+        self.assertEqual(bark_send.await_args.args[1], "金鱼小姐21|¥2.00|1|发货成功|测试商品")
 
     async def test_auto_reply_service_uses_chat_template(self):
         service = object.__new__(AutoReplyService)

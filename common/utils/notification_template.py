@@ -12,6 +12,7 @@ TEMPLATE_CONFIG_KEYS = {
     "chat": "chat_template",
     "delivery": "delivery_template",
     "account": "account_template",
+    "daily_summary": "daily_summary_template",
 }
 
 TEMPLATE_VARIABLES = {
@@ -26,6 +27,8 @@ TEMPLATE_VARIABLES = {
         "ai_reply",
         "ai_reply_status",
         "item_id",
+        "item_name",
+        "商品名称",
         "chat_id",
         "time",
     },
@@ -37,6 +40,8 @@ TEMPLATE_VARIABLES = {
         "buyer_id",
         "message",
         "item_id",
+        "item_name",
+        "商品名称",
         "chat_id",
         "time",
         "order_id",
@@ -56,9 +61,20 @@ TEMPLATE_VARIABLES = {
         "verification_info",
         "time",
     },
+    "daily_summary": {
+        "date", "accounts", "account_count", "order_count", "income",
+        "chat_count", "message_count", "reply_count", "shipped_count",
+        "pending_count", "time",
+    },
 }
 
-_PLACEHOLDER_RE = re.compile(r"{{\s*([A-Za-z_][A-Za-z0-9_]*)\s*}}")
+_PLACEHOLDER_RE = re.compile(r"{{\s*([A-Za-z_][A-Za-z0-9_]*|商品名称)\s*}}")
+
+
+def is_notification_type_enabled(config_data: Mapping[str, Any] | None, notification_type: str) -> bool:
+    """旧渠道继续接收原有通知；每日总结需主动开启。"""
+    default = notification_type != "daily_summary"
+    return (config_data or {}).get(f"{notification_type}_enabled", default) is True
 
 
 def validate_notification_template(template: str, template_type: str) -> str | None:
@@ -100,7 +116,8 @@ def render_notification_template(
         return default_message
 
     def replace_placeholder(match: re.Match[str]) -> str:
-        value = context.get(match.group(1))
+        variable = match.group(1)
+        value = context.get("item_name" if variable == "商品名称" else variable)
         return "未知" if value is None else str(value)
 
     return _PLACEHOLDER_RE.sub(replace_placeholder, template)
