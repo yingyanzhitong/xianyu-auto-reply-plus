@@ -1,0 +1,34 @@
+CHANGELOG.md
+  s_89c4f5e87fe944::t_146e4333cf63d8 3-8
+websocket/app/api/routes/internal.py
+  s_89c4f5e87fe944::t_8cc18e8e73aa24 13,1184,1207,1211-1239
+package.json
+  s_89c4f5e87fe944::t_146e4333cf63d8 3
+common/tests/test_scheduled_delivery_notification.py
+  s_89c4f5e87fe944::t_49b8b84873104a 1-148
+frontend/package.json
+  s_89c4f5e87fe944::t_146e4333cf63d8 4
+frontend/package-lock.json
+  s_89c4f5e87fe944::t_d631a5532b946e 3,9
+package-lock.json
+  s_89c4f5e87fe944::t_cffa4192349f68 3,9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "2c4a8214e7929b5c324fcc24b7846fbbc7147187",
+  "prompts": {},
+  "logical_commit_id": "2c4a8214e7929b5c324fcc24b7846fbbc7147187",
+  "sessions": {
+    "s_89c4f5e87fe944": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a16791-765d-7f50-90e9-824d100f05b0",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "masongzhi <masongzhi@bigo.sg>",
+      "total_additions": 188,
+      "total_deletions": 5
+    }
+  }
+}
