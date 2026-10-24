@@ -1,7 +1,7 @@
 {
   "name": "xianyu-admin-frontend",
   "private": true,
-  "version": "0.3.61",
+  "version": "0.3.62",
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",

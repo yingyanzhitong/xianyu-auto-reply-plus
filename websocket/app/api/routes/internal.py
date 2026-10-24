@@ -1215,22 +1215,31 @@ async def deliver_order(request: DeliverOrderRequest, background_tasks: Backgrou
 
 
 async def _notify_scheduled_delivery_result(request: DeliverOrderRequest, result: dict) -> None:
-    """复用发货通知配置；跳过幂等返回，通知异常不影响已经完成的发货。"""
+    """仅通知本次完整发货成功；通知异常不影响已经完成的发货。"""
     data = result.get("data") or {}
-    if data.get("already_shipped") or data.get("already_card_only_delivered") or result.get("code") == 409:
+    if (
+        not result.get("success")
+        or result.get("code") != 200
+        or data.get("already_shipped")
+        or data.get("already_card_only_delivered")
+        or data.get("is_card_only")
+        or data.get("only_send_card")
+        or not data.get("platform_shipping_confirmed")
+        or data.get("send_intercepted")
+        or data.get("send_failed_count")
+        or data.get("quantity_sent", 0) < max(data.get("quantity_requested", request.quantity), 1)
+    ):
         return
 
     try:
         from app.services.xianyu.notification_manager import NotificationManager
 
-        message = result.get("message") or ("发货成功" if result.get("success") else "发货失败")
-        abnormal = not result.get("success") or data.get("send_intercepted") or data.get("send_failed_count")
-        prefix = "定时发货异常" if abnormal else "定时发货"
+        message = result.get("message") or "发货成功"
         await NotificationManager(request.account_id).send_delivery_failure_notification(
             send_user_name=request.buyer_id,
             send_user_id=request.buyer_id,
             item_id=request.item_id,
-            error_message=f"{prefix}：{message}",
+            error_message=f"定时发货：{message}",
             chat_id=request.chat_id,
             order_id=request.order_no,
         )
@@ -2268,6 +2277,7 @@ async def _deliver_order_impl(request: DeliverOrderRequest):
             # is_card_only=True 告知调用方：订单已被关闭，调用方不要再把本地状态改为 'shipped'
             "is_card_only": closed_order_card_only,
             "only_send_card": only_send_card_result,
+            "platform_shipping_confirmed": platform_shipping_confirmed,
             # 多数量发货：本次实际成功发出的张数（可能 < quantity，例如 data/api 中途耗尽）
             "quantity_requested": requested_quantity,
             "quantity_sent": actual_count,

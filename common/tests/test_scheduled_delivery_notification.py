@@ -22,7 +22,8 @@ class ScheduledDeliveryNotificationTest(unittest.IsolatedAsyncioTestCase):
             buyer_id="buyer-1", chat_id="chat-1", card_id=1, delivery_method="scheduled",
         )
         self.result = {"success": True, "code": 200, "message": "发货成功（共 2 张）",
-                       "data": {"quantity_sent": 2}}
+                       "data": {"quantity_sent": 2, "quantity_requested": 2,
+                                "platform_shipping_confirmed": True}}
         self.lock = asyncio.Lock()
         live = SimpleNamespace(_order_locks={"order-1": self.lock})
         self.channel = {"enabled": True, "channel_type": "bark", "channel_config": {
@@ -78,25 +79,28 @@ class ScheduledDeliveryNotificationTest(unittest.IsolatedAsyncioTestCase):
         await tasks()
         self.send.assert_awaited_once()
 
-    async def test_failed_delivery_sends_failure_reason(self):
+    async def test_failed_delivery_does_not_notify(self):
         self.result.update(success=False, message="卡券库存不足", data=None)
         self.assertEqual(await self.post_delivery(), self.result)
-        self.assertIn("定时发货异常：卡券库存不足", self.send.await_args.args[1])
+        self.send.assert_not_awaited()
 
-    async def test_card_only_partial_delivery_and_interception_keep_result_details(self):
+    async def test_incomplete_deliveries_do_not_notify(self):
+        completed_data = dict(self.result["data"])
         cases = [
-            ({"only_send_card": True}, "只发卡券成功：已发送卡券内容，平台订单保持待发货", "定时发货："),
-            ({"quantity_sent": 1, "quantity_requested": 2}, "仅发出 1/2 张，剩余 1 张请手动补发", "定时发货："),
-            ({"send_intercepted": True}, "卡券疑似被平台风控拦截，请人工核实", "定时发货异常："),
-            ({"send_failed_count": 1}, "共 1 张消息发送失败，请手动补发", "定时发货异常："),
+            ({"only_send_card": True}, "只发卡券成功：已发送卡券内容，平台订单保持待发货"),
+            ({"is_card_only": True}, "订单关闭后补发卡券成功"),
+            ({"quantity_sent": 1}, "仅发出 1/2 张，剩余 1 张请手动补发"),
+            ({"quantity_sent": 0}, "没有发送卡券"),
+            ({"send_intercepted": True}, "卡券疑似被平台风控拦截，请人工核实"),
+            ({"send_failed_count": 1}, "共 1 张消息发送失败，请手动补发"),
+            ({"platform_shipping_confirmed": False}, "卡券已发送，但平台确认发货失败"),
         ]
-        for data, message, prefix in cases:
+        for data, message in cases:
             with self.subTest(data=data):
                 self.send.reset_mock()
-                self.result.update(data=data, message=message)
-                await self.post_delivery()
-                self.send.assert_awaited_once()
-                self.assertIn(prefix + message, self.send.await_args.args[1])
+                self.result.update(data={**completed_data, **data}, message=message)
+                self.assertEqual(await self.post_delivery(), self.result)
+                self.send.assert_not_awaited()
 
     async def test_disabled_delivery_type_channel_and_message_filter_are_respected(self):
         self.channel["channel_config"]["delivery_enabled"] = False
