@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import asyncio
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, BackgroundTasks, HTTPException
 from pydantic import BaseModel
 
 from common.services.account_cookie_service import merge_account_cookie_fields
@@ -1181,7 +1181,7 @@ async def _record_delivery_log(
 
 
 @router.post("/orders/deliver")
-async def deliver_order(request: DeliverOrderRequest):
+async def deliver_order(request: DeliverOrderRequest, background_tasks: BackgroundTasks):
     """订单发货入口；先用账号实例的本地订单锁串行，再进入完整发货流程。"""
     from app.services.xianyu.cookie_manager import get_manager
     from common.db.compat import db_manager
@@ -1204,10 +1204,39 @@ async def deliver_order(request: DeliverOrderRequest):
         }
 
     try:
-        return await _deliver_order_impl(request)
+        result = await _deliver_order_impl(request)
     finally:
         if local_order_lock.locked():
             local_order_lock.release()
+
+    if request.delivery_method == "scheduled":
+        background_tasks.add_task(_notify_scheduled_delivery_result, request, result)
+    return result
+
+
+async def _notify_scheduled_delivery_result(request: DeliverOrderRequest, result: dict) -> None:
+    """复用发货通知配置；跳过幂等返回，通知异常不影响已经完成的发货。"""
+    data = result.get("data") or {}
+    if data.get("already_shipped") or data.get("already_card_only_delivered") or result.get("code") == 409:
+        return
+
+    try:
+        from app.services.xianyu.notification_manager import NotificationManager
+
+        message = result.get("message") or ("发货成功" if result.get("success") else "发货失败")
+        abnormal = not result.get("success") or data.get("send_intercepted") or data.get("send_failed_count")
+        prefix = "定时发货异常" if abnormal else "定时发货"
+        await NotificationManager(request.account_id).send_delivery_failure_notification(
+            send_user_name=request.buyer_id,
+            send_user_id=request.buyer_id,
+            item_id=request.item_id,
+            error_message=f"{prefix}：{message}",
+            chat_id=request.chat_id,
+            order_id=request.order_no,
+        )
+    except Exception as exc:
+        from loguru import logger
+        logger.error("【内部API】订单 {} 定时发货通知失败: {}", request.order_no, exc)
 
 
 async def _deliver_order_impl(request: DeliverOrderRequest):
